@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b1220" />
+  <meta name="description" content="Tallinn prayer times for this month." />
+  <title>This month · Tallinn Prayer Times</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" type="image/svg+xml" href="icons/icon.svg" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div class="app month-app">
+    <header class="month-sticky">
+      <a class="back-link" href="index.html">← Today</a>
+      <div class="month-title-block">
+        <h1 class="month-title" id="monthTitle">—</h1>
+        <p class="month-sub">Tallinn</p>
+      </div>
+      <div class="month-nav">
+        <button type="button" class="nav-btn" id="prevMonth" aria-label="Previous month">‹</button>
+        <button type="button" class="nav-btn" id="nextMonth" aria-label="Next month">›</button>
+      </div>
+    </header>
+
+    <div class="month-grid-wrap">
+      <table class="month-grid" id="monthGrid">
+        <thead>
+          <tr>
+            <th>Day</th>
+            <th>Wd</th>
+            <th>Fajr</th>
+            <th>Dhuhr</th>
+            <th>Asr</th>
+            <th>Maghrib</th>
+            <th>Isha</th>
+          </tr>
+        </thead>
+        <tbody id="monthBody">
+          <tr><td colspan="7" class="loading-cell">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <script type="module" src="js/month.js"></script>
+</body>
+</html>
