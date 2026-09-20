@@ -224,12 +224,22 @@ body {
 .sk-row-name { width: 72px; height: 16px; }
 .sk-row-time { width: 52px; height: 16px; }
 
-/* Month page */
+/* Month page — lock shell so ONLY .month-grid-wrap scrolls (prevents sticky thead covering day 02) */
+body:has(.month-app),
+html.month-page,
+body.month-page {
+  height: 100%;
+  overflow: hidden;
+}
+
 .month-app {
+  display: flex;
+  flex-direction: column;
   max-width: 720px;
+  width: 100%;
   padding: 0;
-  min-height: 100dvh;
   height: 100dvh;
+  max-height: 100dvh;
   overflow: hidden;
 }
 
@@ -296,11 +306,12 @@ body {
 }
 
 .month-grid-wrap {
-  flex: 1;
+  flex: 1 1 auto;
   min-height: 0;
+  height: 0; /* force flex child to respect parent height so overflow scrolls here */
   overflow: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 8px 0 16px;
+  padding: 0 0 16px;
   overscroll-behavior: contain;
 }
 
@@ -340,6 +351,8 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.04em;
   border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  background-clip: padding-box;
 }
 
 /* Sticky Day column so times can scroll horizontally */
