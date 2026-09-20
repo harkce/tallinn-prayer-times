@@ -26,9 +26,15 @@ html, body {
   -webkit-font-smoothing: antialiased;
 }
 
+html, body {
+  height: 100%;
+}
+
 body {
-  padding-top: var(--safe-top);
-  padding-bottom: var(--safe-bottom);
+  /* App shells own safe-area; avoid double inset that clips the tab bar in PWA */
+  padding-top: 0;
+  padding-bottom: 0;
+  overflow: hidden;
 }
 
 .app {
@@ -38,14 +44,28 @@ body {
   display: flex;
   flex-direction: column;
   padding: 16px 18px 24px;
+  box-sizing: border-box;
+}
+
+.app.app-today {
+  /* padding owned by .app-today for safe-area */
+  padding-left: 18px;
+  padding-right: 18px;
+  padding-bottom: 0;
 }
 
 /* Today: one screen, no page scroll — Month lives in the top bar */
 .app-today {
+  height: 100svh;
   height: 100dvh;
+  max-height: 100svh;
   max-height: 100dvh;
   overflow: hidden;
+  padding-top: max(12px, env(safe-area-inset-top, 0px));
+  padding-left: 18px;
+  padding-right: 18px;
   padding-bottom: 0;
+  box-sizing: border-box;
 }
 
 .app-today .today {
@@ -56,10 +76,10 @@ body {
 }
 
 .app-today .prayer-list {
-  flex: 1;
+  flex: 0 0 auto;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start;
 }
 
 .topbar {
@@ -285,26 +305,30 @@ body {
 .sk-row-time { width: 52px; height: 16px; }
 
 
-/* Bottom tabs — always-visible Today | Month */
+/* Bottom tabs — docked, always fully visible in PWA */
 .tabbar {
   flex-shrink: 0;
+  position: sticky;
+  bottom: 0;
+  z-index: 30;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 4px;
   margin-top: auto;
-  padding: 6px 12px max(6px, env(safe-area-inset-bottom, 0px));
+  padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px));
   border-top: 1px solid var(--border);
-  background: color-mix(in srgb, var(--bg) 92%, transparent);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: var(--bg);
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.18);
 }
 
 .tab {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 2px;
   min-height: 56px;
-  padding: 0 12px;
+  padding: 8px 12px;
   border-radius: 14px;
   color: var(--text-muted);
   text-decoration: none;
@@ -320,8 +344,13 @@ body {
   font-weight: 700;
 }
 
+.tab-icon {
+  display: block;
+  flex-shrink: 0;
+}
+
 .tab-label {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.01em;
 }
@@ -344,9 +373,12 @@ body.month-page {
   max-width: 720px;
   width: 100%;
   padding: 0;
+  height: 100svh;
   height: 100dvh;
+  max-height: 100svh;
   max-height: 100dvh;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .month-header-spacer {
