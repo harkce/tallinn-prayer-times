@@ -227,18 +227,19 @@ body {
 /* Month page */
 .month-app {
   max-width: 720px;
-  padding: 0 0 24px;
+  padding: 0;
+  min-height: 100dvh;
+  height: 100dvh;
+  overflow: hidden;
 }
 
-.month-sticky {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  background: rgba(11, 18, 32, 0.94);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+.month-header {
+  flex-shrink: 0;
+  z-index: 20;
+  background: rgba(11, 18, 32, 0.96);
   border-bottom: 1px solid var(--border);
   padding: 12px 16px;
+  padding-top: max(12px, env(safe-area-inset-top, 0px));
   display: grid;
   grid-template-columns: 72px 1fr auto;
   align-items: center;
@@ -282,53 +283,86 @@ body {
 
 .nav-btn:active { opacity: 0.8; }
 
+.month-scroll-hint {
+  flex-shrink: 0;
+  margin: 0;
+  padding: 8px 16px 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.month-scroll-hint.is-hidden {
+  visibility: hidden;
+}
+
 .month-grid-wrap {
-  overflow-x: auto;
-  padding: 8px 12px 0;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
   -webkit-overflow-scrolling: touch;
+  padding: 8px 0 16px;
+  overscroll-behavior: contain;
 }
 
 .month-grid {
-  width: 100%;
-  border-collapse: collapse;
+  width: max-content;
+  min-width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
   font-size: 13px;
   font-variant-numeric: tabular-nums;
-  min-width: 520px;
+  font-feature-settings: "tnum";
 }
 
 .month-grid th,
 .month-grid td {
-  padding: 10px 8px;
+  padding: 10px 10px;
   text-align: right;
   border-bottom: 1px solid var(--border);
   white-space: nowrap;
+  background: var(--bg);
 }
 
-.month-grid th:first-child,
-.month-grid td:first-child,
-.month-grid th:nth-child(2),
-.month-grid td:nth-child(2) {
+.month-grid th.col-wd,
+.month-grid td.col-wd,
+.month-grid th.col-day,
+.month-grid td.col-day {
   text-align: left;
 }
 
 .month-grid thead th {
   position: sticky;
-  top: 69px;
-  background: var(--bg);
+  top: 0;
+  z-index: 4;
   color: var(--text-muted);
   font-weight: 600;
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  z-index: 5;
+  border-bottom: 1px solid var(--border);
 }
 
-.month-grid tr.today-row {
-  background: var(--bg-current);
+/* Sticky Day column so times can scroll horizontally */
+.month-grid th.col-day,
+.month-grid td.col-day {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  min-width: 44px;
+  box-shadow: 6px 0 8px -6px rgba(0, 0, 0, 0.45);
+}
+
+.month-grid thead th.col-day {
+  z-index: 6;
 }
 
 .month-grid tr.today-row td {
   font-weight: 600;
+  background: var(--bg-current);
+}
+
+.month-grid tr.today-row td.col-day {
+  background: #152238;
 }
 
 .loading-cell {
@@ -336,6 +370,7 @@ body {
   color: var(--text-muted);
   padding: 24px !important;
 }
+
 
 @media (prefers-color-scheme: light) {
   :root {
@@ -356,11 +391,19 @@ body {
     background-size: 200% 100%;
   }
 
-  .month-sticky {
-    background: rgba(244, 246, 250, 0.94);
+
+
+  .month-header {
+    background: rgba(244, 246, 250, 0.96);
   }
 
-  .month-grid thead th {
+  .month-grid thead th,
+  .month-grid th.col-day,
+  .month-grid td.col-day {
     background: var(--bg);
+  }
+
+  .month-grid tr.today-row td.col-day {
+    background: #e8f0fc;
   }
 }

@@ -4,6 +4,8 @@ const monthTitle = document.getElementById("monthTitle");
 const monthBody = document.getElementById("monthBody");
 const prevBtn = document.getElementById("prevMonth");
 const nextBtn = document.getElementById("nextMonth");
+const gridWrap = document.getElementById("monthGridWrap");
+const scrollHint = document.getElementById("monthScrollHint");
 
 const TZ = CITY.timeZone;
 
@@ -23,6 +25,12 @@ function todayParts() {
 
 let view = todayParts();
 
+function updateScrollHint() {
+  if (!gridWrap || !scrollHint) return;
+  const canScroll = gridWrap.scrollWidth > gridWrap.clientWidth + 4;
+  scrollHint.classList.toggle("is-hidden", !canScroll);
+}
+
 function render() {
   const { year, month } = view;
   monthTitle.textContent = `${MONTHS[month - 1]} ${year}`;
@@ -36,21 +44,24 @@ function render() {
     if (isToday) tr.classList.add("today-row");
 
     const cells = [
-      String(row.day).padStart(2, "0"),
-      row.weekday,
-      row.fajr,
-      row.dhuhr,
-      row.asr,
-      row.maghrib,
-      row.isha
+      { value: String(row.day).padStart(2, "0"), className: "col-day" },
+      { value: row.weekday, className: "col-wd" },
+      { value: row.fajr },
+      { value: row.dhuhr },
+      { value: row.asr },
+      { value: row.maghrib },
+      { value: row.isha }
     ];
-    for (const value of cells) {
+    for (const cell of cells) {
       const td = document.createElement("td");
-      td.textContent = value;
+      td.textContent = cell.value;
+      if (cell.className) td.className = cell.className;
       tr.appendChild(td);
     }
     monthBody.appendChild(tr);
   }
+
+  requestAnimationFrame(updateScrollHint);
 }
 
 function shiftMonth(delta) {
@@ -64,6 +75,10 @@ function shiftMonth(delta) {
 
 prevBtn.addEventListener("click", () => shiftMonth(-1));
 nextBtn.addEventListener("click", () => shiftMonth(1));
+gridWrap?.addEventListener("scroll", () => {
+  if (gridWrap.scrollLeft > 8) scrollHint?.classList.add("is-hidden");
+}, { passive: true });
+window.addEventListener("resize", updateScrollHint);
 
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("./sw.js", { scope: "./" }).catch(() => {});

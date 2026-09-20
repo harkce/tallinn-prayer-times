@@ -14,7 +14,7 @@
 </head>
 <body>
   <div class="app month-app">
-    <header class="month-sticky">
+    <header class="month-header">
       <a class="back-link" href="index.html">← Today</a>
       <div class="month-title-block">
         <h1 class="month-title" id="monthTitle">—</h1>
@@ -26,12 +26,14 @@
       </div>
     </header>
 
-    <div class="month-grid-wrap">
+    <p class="month-scroll-hint" id="monthScrollHint">Swipe sideways for Maghrib &amp; Isha →</p>
+
+    <div class="month-grid-wrap" id="monthGridWrap">
       <table class="month-grid" id="monthGrid">
         <thead>
           <tr>
-            <th>Day</th>
-            <th>Wd</th>
+            <th class="col-day">Day</th>
+            <th class="col-wd">Wd</th>
             <th>Fajr</th>
             <th>Dhuhr</th>
             <th>Asr</th>
