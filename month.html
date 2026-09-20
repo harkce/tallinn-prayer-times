@@ -13,6 +13,20 @@
   <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png" />
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
   <link rel="stylesheet" href="css/styles.css" />
+  <script>
+    (function () {
+      var android = /Android/i.test(navigator.userAgent);
+      var standalone = window.matchMedia("(display-mode: standalone)").matches
+        || window.matchMedia("(display-mode: fullscreen)").matches
+        || window.matchMedia("(display-mode: minimal-ui)").matches
+        || window.navigator.standalone === true;
+      var root = document.documentElement;
+      var vv = window.visualViewport;
+      var h = vv && vv.height > 0 ? vv.height : window.innerHeight;
+      root.style.setProperty("--app-vh", Math.round(h) + "px");
+      root.style.setProperty("--sab-floor", android && standalone ? "48px" : "0px");
+    })();
+  </script>
 </head>
 <body class="month-page">
   <div class="app month-app">

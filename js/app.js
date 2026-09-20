@@ -1,3 +1,4 @@
+import "./viewport-insets.js";
 import { getDayTimes, CITY } from "./prayer-calc.js";
 
 const PRAYERS = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"];

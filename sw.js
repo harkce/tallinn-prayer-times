@@ -1,9 +1,10 @@
-const CACHE = "tallinn-prayer-v12";
+const CACHE = "tallinn-prayer-v13";
 const PRECACHE = [
   "./",
   "./index.html",
   "./month.html",
   "./css/styles.css",
+  "./js/viewport-insets.js",
   "./js/app.js",
   "./js/month.js",
   "./js/prayer-calc.js",

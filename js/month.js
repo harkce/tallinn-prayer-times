@@ -1,3 +1,4 @@
+import "./viewport-insets.js";
 import { getMonthTimes, MONTHS, CITY } from "./prayer-calc.js";
 
 const monthTitle = document.getElementById("monthTitle");
