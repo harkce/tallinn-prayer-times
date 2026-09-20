@@ -1,4 +1,6 @@
 import "./viewport-insets.js";
+import { mountTabbar } from "./tabbar.js";
+mountTabbar("month");
 import { getMonthTimes, MONTHS, CITY } from "./prayer-calc.js";
 
 const monthTitle = document.getElementById("monthTitle");

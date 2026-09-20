@@ -16,6 +16,8 @@
   --sab-floor: 0px;
   --app-bottom-inset: max(var(--safe-bottom), var(--sab-floor));
   --app-vh: 100dvh;
+  --tabbar-tabs: 56px;
+  --tabbar-height: calc(8px + var(--tabbar-tabs) + 8px + var(--app-bottom-inset));
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
@@ -56,7 +58,7 @@ html, body {
   padding-top: max(12px, env(safe-area-inset-top, 0px));
   padding-left: 18px;
   padding-right: 18px;
-  padding-bottom: 0;
+  padding-bottom: var(--tabbar-height);
   box-sizing: border-box;
 }
 
@@ -297,20 +299,28 @@ html, body {
 .sk-row-time { width: 52px; height: 16px; }
 
 
-/* Bottom tabs — docked, always fully visible in PWA */
+/* Bottom tabs — one shared full-bleed bar (escapes .app max-width / side padding) */
+#tabbar-root {
+  /* mount point; bar itself is fixed */
+}
+
 .tabbar {
-  flex-shrink: 0;
-  position: sticky;
+  position: fixed;
+  left: 0;
+  right: 0;
   bottom: 0;
-  z-index: 30;
+  width: 100%;
+  max-width: none;
+  z-index: 40;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 4px;
-  margin-top: auto;
+  margin: 0;
   padding: 8px 12px calc(8px + var(--app-bottom-inset));
   border-top: 1px solid var(--border);
   background: var(--bg);
   box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.18);
+  box-sizing: border-box;
 }
 
 .tab {
@@ -366,6 +376,7 @@ body.month-page {
   max-width: 720px;
   width: 100%;
   padding: 0;
+  padding-bottom: var(--tabbar-height);
   height: var(--app-vh);
   max-height: var(--app-vh);
   overflow: hidden;

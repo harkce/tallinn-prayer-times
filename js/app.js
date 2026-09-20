@@ -1,4 +1,6 @@
 import "./viewport-insets.js";
+import { mountTabbar } from "./tabbar.js";
+mountTabbar("today");
 import { getDayTimes, CITY } from "./prayer-calc.js";
 
 const PRAYERS = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"];

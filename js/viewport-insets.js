@@ -22,8 +22,8 @@ function syncViewportInsets() {
 
   let floor = 0;
   if (ANDROID && isStandalone()) {
-    // Typical 3-button nav ~48px; gesture bar is smaller but 48 stays safe.
-    floor = 48;
+    // 3-button nav often needs ~56–64px; 48 still clipped on device.
+    floor = 64;
     if (vv) {
       const gap = Math.max(0, window.innerHeight - (vv.height + vv.offsetTop));
       if (gap >= 24) floor = Math.max(floor, Math.round(gap));
