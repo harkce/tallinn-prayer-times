@@ -1,4 +1,4 @@
-const CACHE = "tallinn-prayer-v6";
+const CACHE = "tallinn-prayer-v7";
 const PRECACHE = [
   "./",
   "./index.html",

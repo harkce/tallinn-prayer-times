@@ -1,9 +1,10 @@
 :root {
   --bg: #0b1220;
   --bg-elev: #121a2b;
-  --bg-current: rgba(94, 168, 255, 0.12);
+  --bg-current: rgba(232, 197, 71, 0.14);
   --text: #f2f5fb;
   --text-muted: #8b97ad;
+  --text-past: #a0adc3;
   --accent: #E8C547;
   --border: rgba(255, 255, 255, 0.08);
   --pill-bg: rgba(255, 180, 70, 0.18);
@@ -170,7 +171,7 @@ body {
 
 .prayer-row.past .prayer-name,
 .prayer-row.past .prayer-time {
-  color: var(--text-muted);
+  color: var(--text-past);
 }
 
 .prayer-row.current {
@@ -389,9 +390,10 @@ body.month-page {
   :root {
     --bg: #f4f6fa;
     --bg-elev: #ffffff;
-    --bg-current: rgba(30, 110, 220, 0.1);
+    --bg-current: rgba(201, 166, 58, 0.16);
     --text: #101826;
     --text-muted: #5c6b82;
+    --text-past: #6b7c94;
     --accent: #C9A63A;
     --border: rgba(16, 24, 38, 0.1);
     --pill-bg: rgba(180, 100, 0, 0.14);
