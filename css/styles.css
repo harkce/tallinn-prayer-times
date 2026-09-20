@@ -318,13 +318,18 @@ body.month-page {
 
 .month-grid {
   width: max-content;
-  min-width: 100%;
+  min-width: 520px;
   border-collapse: separate;
   border-spacing: 0;
   font-size: 13px;
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
+  table-layout: fixed;
 }
+
+.month-grid col.col-day { width: 44px; }
+.month-grid col.col-wd { width: 40px; }
+.month-grid col.col-time { width: 58px; }
 
 .month-grid th,
 .month-grid td {
@@ -342,32 +347,61 @@ body.month-page {
   text-align: left;
 }
 
-.month-grid thead th {
+/* Screen-reader thead — visible labels live in .month-labels */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.month-labels {
   position: sticky;
   top: 0;
-  z-index: 4;
+  z-index: 5;
+  display: grid;
+  grid-template-columns: 44px 40px repeat(5, minmax(58px, 1fr));
+  gap: 0;
+  min-width: 520px;
+  padding: 10px 12px;
+  margin: 0;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
   color: var(--text-muted);
   font-weight: 600;
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  border-bottom: 1px solid var(--border);
+}
+
+.month-labels span {
+  text-align: right;
+}
+
+.month-labels .col-day,
+.month-labels .col-wd {
+  text-align: left;
+}
+
+.month-labels .col-day {
+  position: sticky;
+  left: 0;
   background: var(--bg);
-  background-clip: padding-box;
+  box-shadow: 6px 0 8px -6px rgba(0, 0, 0, 0.45);
 }
 
 /* Sticky Day column so times can scroll horizontally */
-.month-grid th.col-day,
 .month-grid td.col-day {
   position: sticky;
   left: 0;
   z-index: 3;
   min-width: 44px;
   box-shadow: 6px 0 8px -6px rgba(0, 0, 0, 0.45);
-}
-
-.month-grid thead th.col-day {
-  z-index: 6;
 }
 
 .month-grid tr.today-row td {
@@ -412,8 +446,8 @@ body.month-page {
     background: rgba(244, 246, 250, 0.96);
   }
 
-  .month-grid thead th,
-  .month-grid th.col-day,
+  .month-labels,
+  .month-labels .col-day,
   .month-grid td.col-day {
     background: var(--bg);
   }

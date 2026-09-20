@@ -6,6 +6,7 @@ const prevBtn = document.getElementById("prevMonth");
 const nextBtn = document.getElementById("nextMonth");
 const gridWrap = document.getElementById("monthGridWrap");
 const scrollHint = document.getElementById("monthScrollHint");
+const labels = document.querySelector(".month-labels");
 
 const TZ = CITY.timeZone;
 
@@ -28,7 +29,8 @@ let view = todayParts();
 function updateScrollHint() {
   if (!gridWrap || !scrollHint) return;
   const canScroll = gridWrap.scrollWidth > gridWrap.clientWidth + 4;
-  scrollHint.classList.toggle("is-hidden", !canScroll);
+  const scrolled = gridWrap.scrollLeft > 8;
+  scrollHint.classList.toggle("is-hidden", !canScroll || scrolled);
 }
 
 function render() {
@@ -70,14 +72,13 @@ function shiftMonth(delta) {
   if (month < 1) { month = 12; year -= 1; }
   if (month > 12) { month = 1; year += 1; }
   view = { year, month, day: 1 };
+  if (gridWrap) gridWrap.scrollTop = 0;
   render();
 }
 
 prevBtn.addEventListener("click", () => shiftMonth(-1));
 nextBtn.addEventListener("click", () => shiftMonth(1));
-gridWrap?.addEventListener("scroll", () => {
-  if (gridWrap.scrollLeft > 8) scrollHint?.classList.add("is-hidden");
-}, { passive: true });
+gridWrap?.addEventListener("scroll", updateScrollHint, { passive: true });
 window.addEventListener("resize", updateScrollHint);
 
 if ("serviceWorker" in navigator) {

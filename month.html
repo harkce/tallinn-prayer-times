@@ -31,16 +31,25 @@
     <p class="month-scroll-hint" id="monthScrollHint">Swipe sideways for Maghrib &amp; Isha →</p>
 
     <div class="month-grid-wrap" id="monthGridWrap">
+      <div class="month-labels" aria-hidden="true">
+        <span class="col-day">Day</span>
+        <span class="col-wd">Wd</span>
+        <span>Fajr</span>
+        <span>Dhuhr</span>
+        <span>Asr</span>
+        <span>Maghrib</span>
+        <span>Isha</span>
+      </div>
       <table class="month-grid" id="monthGrid">
-        <thead>
+        <thead class="sr-only">
           <tr>
-            <th class="col-day">Day</th>
-            <th class="col-wd">Wd</th>
-            <th>Fajr</th>
-            <th>Dhuhr</th>
-            <th>Asr</th>
-            <th>Maghrib</th>
-            <th>Isha</th>
+            <th scope="col">Day</th>
+            <th scope="col">Weekday</th>
+            <th scope="col">Fajr</th>
+            <th scope="col">Dhuhr</th>
+            <th scope="col">Asr</th>
+            <th scope="col">Maghrib</th>
+            <th scope="col">Isha</th>
           </tr>
         </thead>
         <tbody id="monthBody">
