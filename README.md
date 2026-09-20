@@ -45,8 +45,9 @@ Project site URL: `https://harkce.github.io/tallinn-prayer-times/`
 
 1. Repo **Settings → Pages**
 2. Source: **Deploy from a branch**
-3. Branch: `main` / folder `/ (root)`  
-   — or use the included GitHub Actions workflow (`.github/workflows/pages.yml`)
+3. Branch: `main` / folder `/ (root)`
+
+(An Actions-based Pages workflow was omitted because the push token lacks the `workflow` scope; branch deploy is enough.)
 
 Assets use relative paths, so the project base path works without a bundler.
 
