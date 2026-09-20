@@ -44,10 +44,10 @@ html, body {
 }
 
 .app.app-today {
-  /* padding owned by .app-today for safe-area */
+  /* side padding owned here; bottom must clear the fixed shared tabbar */
   padding-left: 18px;
   padding-right: 18px;
-  padding-bottom: 0;
+  padding-bottom: var(--tabbar-height);
 }
 
 /* Today: one screen, no page scroll — Month lives in the top bar */
