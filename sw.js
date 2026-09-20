@@ -1,4 +1,4 @@
-const CACHE = "tallinn-prayer-v2";
+const CACHE = "tallinn-prayer-v3";
 const PRECACHE = [
   "./",
   "./index.html",
@@ -12,7 +12,8 @@ const PRECACHE = [
   "./icons/icon-512.png",
   "./icons/icon-maskable-192.png",
   "./icons/icon-maskable-512.png",
-  "./icons/apple-touch-icon.png"
+  "./icons/apple-touch-icon.png",
+  "./icons/favicon-32.png"
 ];
 
 self.addEventListener("install", (event) => {
