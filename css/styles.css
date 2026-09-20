@@ -20,20 +20,10 @@
 html, body {
   margin: 0;
   padding: 0;
+  height: 100%;
   background: var(--bg);
   color: var(--text);
-  min-height: 100%;
   -webkit-font-smoothing: antialiased;
-}
-
-html, body {
-  height: 100%;
-}
-
-body {
-  /* App shells own safe-area; avoid double inset that clips the tab bar in PWA */
-  padding-top: 0;
-  padding-bottom: 0;
   overflow: hidden;
 }
 
