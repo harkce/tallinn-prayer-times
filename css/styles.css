@@ -45,7 +45,7 @@ body {
   height: 100dvh;
   max-height: 100dvh;
   overflow: hidden;
-  padding-bottom: max(16px, env(safe-area-inset-bottom, 0px));
+  padding-bottom: 0;
 }
 
 .app-today .today {
@@ -284,6 +284,52 @@ body {
 .sk-row-name { width: 72px; height: 16px; }
 .sk-row-time { width: 52px; height: 16px; }
 
+
+/* Bottom tabs — always-visible Today | Month */
+.tabbar {
+  flex-shrink: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  margin-top: auto;
+  padding: 8px 12px max(8px, env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 48px;
+  padding: 6px 8px;
+  border-radius: 12px;
+  color: var(--text-muted);
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tab.is-active {
+  color: var(--accent);
+  background: var(--bg-current);
+}
+
+.tab-icon { display: block; }
+
+.tab-label {
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+}
+
+@supports not (background: color-mix(in srgb, white 50%, black)) {
+  .tabbar { background: var(--bg); }
+}
+
 /* Month page — lock shell so ONLY .month-grid-wrap scrolls (prevents sticky thead covering day 02) */
 body:has(.month-app),
 html.month-page,
@@ -301,6 +347,11 @@ body.month-page {
   height: 100dvh;
   max-height: 100dvh;
   overflow: hidden;
+}
+
+.month-header-spacer {
+  width: 40px;
+  height: 40px;
 }
 
 .month-header {
