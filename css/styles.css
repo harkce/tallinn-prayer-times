@@ -40,6 +40,28 @@ body {
   padding: 16px 18px 24px;
 }
 
+/* Today: one screen, no page scroll — Month lives in the top bar */
+.app-today {
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+  padding-bottom: max(16px, env(safe-area-inset-bottom, 0px));
+}
+
+.app-today .today {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-today .prayer-list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
 .topbar {
   display: flex;
   align-items: center;
@@ -70,6 +92,13 @@ body {
   white-space: nowrap;
 }
 
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
 .offline-pill {
   flex-shrink: 0;
   font-size: 11px;
@@ -80,6 +109,24 @@ body {
   border-radius: 999px;
   background: var(--pill-bg);
   color: var(--pill-text);
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  color: var(--accent);
+  background: var(--chip-bg);
+  border: 1px solid var(--border);
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.icon-btn:active {
+  opacity: 0.75;
 }
 
 .hero {
@@ -216,6 +263,18 @@ body {
 @keyframes shimmer {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
+}
+
+.prayer-list.is-loading .prayer-row {
+  pointer-events: none;
+}
+
+.app-today.is-booting .hero-content {
+  display: none !important;
+}
+
+.app-today.is-booting .hero-skel {
+  display: block;
 }
 
 .sk-label { width: 48px; height: 12px; margin-bottom: 10px; }

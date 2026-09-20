@@ -17,6 +17,7 @@ const tomorrowChip = document.getElementById("tomorrowChip");
 const prayerList = document.getElementById("prayerList");
 
 let tickTimer = null;
+let booting = true;
 
 function partsInTz(date = new Date()) {
   const fmt = new Intl.DateTimeFormat("en-GB", {
@@ -193,8 +194,10 @@ function render(bundle, { fromCache = false, offline = false } = {}) {
   const nowMin = bundle.today?.minuteOfDay ?? -1;
   renderList(bundle.schedule, bundle.currentIndex, nowMin);
 
-  heroSkeleton.hidden = true;
-  heroContent.hidden = false;
+  if (!booting) {
+    heroSkeleton.hidden = true;
+    heroContent.hidden = false;
+  }
 }
 
 function tick() {
@@ -219,13 +222,32 @@ function tick() {
   }
 }
 
+const BOOT_MS = 320;
+
+function revealLoaded() {
+  booting = false;
+  document.getElementById("app")?.classList.remove("is-booting");
+  prayerList.classList.remove("is-loading");
+  // Re-render once so hero swaps off skeleton
+  tick();
+}
+
 function start() {
-  // Brief skeleton then render (feels intentional on first paint)
-  requestAnimationFrame(() => {
+  const app = document.getElementById("app");
+  app?.classList.add("is-booting");
+  const readyAt = performance.now() + BOOT_MS;
+
+  const boot = () => {
     tick();
-    if (tickTimer) clearInterval(tickTimer);
-    tickTimer = setInterval(tick, 1000);
-  });
+    const wait = Math.max(0, readyAt - performance.now());
+    setTimeout(() => {
+      revealLoaded();
+      if (tickTimer) clearInterval(tickTimer);
+      tickTimer = setInterval(tick, 1000);
+    }, wait);
+  };
+
+  requestAnimationFrame(boot);
 }
 
 window.addEventListener("online", () => {
