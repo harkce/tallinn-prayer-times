@@ -461,16 +461,20 @@ body.month-page {
   box-sizing: border-box;
 }
 
+/* Width-cap only — do NOT flex-grow the header/hint (that created the Month gap). */
 .month-app .month-header,
 .month-app .month-scroll-hint,
 .month-app .month-grid-wrap {
-  flex: 1 1 auto;
-  min-height: 0;
   width: 100%;
   max-width: 720px;
   margin-left: auto;
   margin-right: auto;
   box-sizing: border-box;
+}
+
+.month-app .month-header,
+.month-app .month-scroll-hint {
+  flex: 0 0 auto;
 }
 
 .month-header-spacer {
