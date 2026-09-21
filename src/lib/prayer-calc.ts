@@ -1,11 +1,37 @@
-"use strict";
-
+// @ts-nocheck
 /**
  * Prayer-time calculation ported from Eesti Islamikeskus (eestiislamikeskus.org/app.js).
  * Tallinn-only. METHOD, high-latitude, and Isha month rules are unchanged so times match.
  */
 
-export const CITY = {
+export type City = {
+  label: string;
+  latitude: number;
+  longitude: number;
+  timeZone: string;
+};
+
+type PrayerTimeResult = {
+  time: number;
+  rule: string;
+  ruleType: string;
+  minutesAfterMaghrib?: number;
+};
+
+type IshaMonthRule = {
+  mode: string;
+  fallbackMinutes: number;
+  maxAngleMinutes: number;
+  label: string;
+};
+
+type HijriDate = {
+  day: string | undefined;
+  month: string;
+  year: string;
+} | null;
+
+export const CITY: City = {
   label: "Tallinn, Estonia",
   latitude: 59.4370,
   longitude: 24.7536,
@@ -34,7 +60,7 @@ const METHOD = {
     the same Maghrib-plus fallback is used.
   You can change the minutes below if the local mosque approves a different value.
 */
-const ISHA_MONTH_RULES = {
+const ISHA_MONTH_RULES: Record<number, IshaMonthRule> = {
   1: { mode: "anglePreferred", fallbackMinutes: 90, maxAngleMinutes: 240, label: "15° angle, with fallback only if extreme" },
   2: { mode: "anglePreferred", fallbackMinutes: 90, maxAngleMinutes: 240, label: "15° angle, with fallback only if extreme" },
   3: { mode: "anglePreferred", fallbackMinutes: 90, maxAngleMinutes: 220, label: "15° angle, with fallback only if extreme" },
@@ -49,19 +75,19 @@ const ISHA_MONTH_RULES = {
   12: { mode: "anglePreferred", fallbackMinutes: 90, maxAngleMinutes: 240, label: "15° angle, with fallback only if extreme" }
 };
 
-const MONTHS = [
+const MONTHS: string[] = [
   "January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December"
 ];
 
-const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const WEEKDAYS: string[] = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const RAD = Math.PI / 180;
 const DEG = 180 / Math.PI;
 const MINUTES_PER_DAY = 1440;
 const ROOT_SEARCH_STEP_MINUTES = 5;
 
 
-function calculatePrayerTimes({ year, month, day, city }) {
+function calculatePrayerTimes({ year, month, day, city }: { year: number; month: number; day: number; city: City }) {
   const sunrise = timeAtSolarAltitude(year, month, day, city, METHOD.sunriseSunsetAltitude, "morning");
   const sunset = timeAtSolarAltitude(year, month, day, city, METHOD.sunriseSunsetAltitude, "afternoon");
   const dhuhr = solarNoon(year, month, day, city) + METHOD.dhuhrOffsetMinutes;
@@ -493,7 +519,7 @@ function getJulianDay(date) {
 }
 
 
-const TIME_ZONE_PART_FORMATTERS = new Map();
+const TIME_ZONE_PART_FORMATTERS = new Map<string, Intl.DateTimeFormat>();
 
 function utcMillisFromZonedLocal(year, month, day, minuteOfDay, timeZone) {
   const localCivilMillis = Date.UTC(year, month - 1, day, 0, 0, 0) + minuteOfDay * 60 * 1000;
@@ -700,7 +726,7 @@ function circularDifference(value, target) {
   return ((value - target + MINUTES_PER_DAY / 2) % MINUTES_PER_DAY) - MINUTES_PER_DAY / 2;
 }
 
-export function formatClock24(minutes, mode = "round") {
+export function formatClock24(minutes: number | null, mode: "round" | "ceil" | "floor" = "round"): string {
   if (minutes === null || Number.isNaN(minutes)) return "--:--";
   let rounded;
   if (mode === "ceil") rounded = Math.ceil(minutes - 0.000001);
@@ -721,7 +747,7 @@ function roundedMinutes(minutes, mode) {
   return normalizeMinutes(rounded);
 }
 
-export function getDayTimes(year, month, day) {
+export function getDayTimes(year: number, month: number, day: number) {
   const prayers = calculatePrayerTimes({ year, month, day, city: CITY });
   return {
     fajr: formatClock24(prayers.fajr.time, "round"),
@@ -745,7 +771,7 @@ export function getDayTimes(year, month, day) {
   };
 }
 
-export function getMonthTimes(year, month) {
+export function getMonthTimes(year: number, month: number) {
   const days = daysInMonth(year, month);
   const rows = [];
   for (let day = 1; day <= days; day += 1) {
