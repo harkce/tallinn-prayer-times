@@ -54,6 +54,9 @@ type CachePayload = {
   generatedAt: string;
 };
 
+/** Keep last painted Today bundle so returning from Month is instant (no re-boot). */
+let lastBundle: Bundle | null = null;
+
 function partsInTz(date = new Date()): TzParts {
   const fmt = new Intl.DateTimeFormat("en-GB", {
     timeZone: TZ,
@@ -183,14 +186,16 @@ function loadCache(): CachePayload | null {
 }
 
 export function TodayPage() {
-  const [booting, setBooting] = useState(true);
+  const hadPainted = lastBundle != null;
+  const [booting, setBooting] = useState(!hadPainted);
   const [offline, setOffline] = useState(!navigator.onLine);
-  const [bundle, setBundle] = useState<Bundle | null>(null);
+  const [bundle, setBundle] = useState<Bundle | null>(lastBundle);
   const [fromCache, setFromCache] = useState(false);
 
   const tick = useCallback(() => {
     try {
       const next = computeBundle();
+      lastBundle = next;
       setBundle(next);
       setFromCache(false);
       setOffline(!navigator.onLine);
@@ -199,7 +204,7 @@ export function TodayPage() {
       console.error(err);
       const cached = loadCache();
       if (cached) {
-        setBundle({
+        const fallback: Bundle = {
           today: {
             year: 0,
             month: 0,
@@ -217,7 +222,9 @@ export function TodayPage() {
           currentIndex: cached.currentIndex,
           totalSeconds: null,
           generatedAt: cached.generatedAt
-        });
+        };
+        lastBundle = fallback;
+        setBundle(fallback);
         setFromCache(true);
         setOffline(true);
       }
@@ -225,19 +232,28 @@ export function TodayPage() {
   }, []);
 
   useEffect(() => {
-    const readyAt = performance.now() + BOOT_MS;
     let intervalId: number | undefined;
     let timeoutId: number | undefined;
-    const boot = () => {
+    let raf = 0;
+
+    if (hadPainted) {
+      // Instant return: paint cached Today, then resume live ticks.
       tick();
-      const wait = Math.max(0, readyAt - performance.now());
-      timeoutId = window.setTimeout(() => {
-        setBooting(false);
+      intervalId = window.setInterval(tick, 1000);
+    } else {
+      const readyAt = performance.now() + BOOT_MS;
+      const boot = () => {
         tick();
-        intervalId = window.setInterval(tick, 1000);
-      }, wait);
-    };
-    const raf = requestAnimationFrame(boot);
+        const wait = Math.max(0, readyAt - performance.now());
+        timeoutId = window.setTimeout(() => {
+          setBooting(false);
+          tick();
+          intervalId = window.setInterval(tick, 1000);
+        }, wait);
+      };
+      raf = requestAnimationFrame(boot);
+    }
+
     const onOnline = () => {
       setOffline(false);
       tick();
@@ -246,13 +262,13 @@ export function TodayPage() {
     window.addEventListener("online", onOnline);
     window.addEventListener("offline", onOffline);
     return () => {
-      cancelAnimationFrame(raf);
+      if (raf) cancelAnimationFrame(raf);
       if (timeoutId) clearTimeout(timeoutId);
       if (intervalId) clearInterval(intervalId);
       window.removeEventListener("online", onOnline);
       window.removeEventListener("offline", onOffline);
     };
-  }, [tick]);
+  }, [tick, hadPainted]);
 
   const dateText =
     fromCache && bundle?.todayLabel
@@ -279,51 +295,53 @@ export function TodayPage() {
         </div>
       </header>
 
-      <section className="hero" aria-live="polite">
-        <div className="skeleton hero-skel" hidden={!booting}>
-          <div className="sk sk-label" />
-          <div className="sk sk-name" />
-          <div className="sk sk-time" />
-          <div className="sk sk-countdown" />
-        </div>
-        <div className="hero-content" hidden={booting}>
-          <div className="next-label">Next</div>
-          <div className="next-name-row">
-            <h1 className="next-name">{bundle?.next.name ?? "—"}</h1>
-            <span className="chip tomorrow-chip" hidden={!bundle?.nextIsTomorrow}>
-              tomorrow
-            </span>
+      <div className="today-body">
+        <section className="hero" aria-live="polite">
+          <div className="skeleton hero-skel" hidden={!booting}>
+            <div className="sk sk-label" />
+            <div className="sk sk-name" />
+            <div className="sk sk-time" />
+            <div className="sk sk-countdown" />
           </div>
-          <div className="next-time">{bundle?.next.time ?? "—:—"}</div>
-          <div className="next-countdown">
-            {bundle?.totalSeconds != null ? formatCountdown(bundle.totalSeconds) : "—"}
+          <div className="hero-content" hidden={booting}>
+            <div className="next-label">Next</div>
+            <div className="next-name-row">
+              <h1 className="next-name">{bundle?.next.name ?? "—"}</h1>
+              <span className="chip tomorrow-chip" hidden={!bundle?.nextIsTomorrow}>
+                tomorrow
+              </span>
+            </div>
+            <div className="next-time">{bundle?.next.time ?? "—:—"}</div>
+            <div className="next-countdown">
+              {bundle?.totalSeconds != null ? formatCountdown(bundle.totalSeconds) : "—"}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section className="today" aria-label="Today's prayer times">
-        <ul className={`prayer-list${booting ? " is-loading" : ""}`}>
-          {booting || !bundle
-            ? [0, 1, 2, 3, 4].map((i) => (
-                <li key={i} className="prayer-row skeleton-row">
-                  <span className="sk sk-row-name" />
-                  <span className="sk sk-row-time" />
-                </li>
-              ))
-            : bundle.schedule.map((p, i) => {
-                const classes = ["prayer-row"];
-                if ((p.minutes ?? -1) < nowMin && i !== bundle.currentIndex) classes.push("past");
-                if (i === bundle.currentIndex) classes.push("current");
-                if ((p.minutes ?? -1) > nowMin) classes.push("upcoming");
-                return (
-                  <li key={p.key} className={classes.join(" ")}>
-                    <span className="prayer-name">{p.name}</span>
-                    <span className="prayer-time">{p.time}</span>
+        <section className="today" aria-label="Today's prayer times">
+          <ul className={`prayer-list${booting ? " is-loading" : ""}`}>
+            {booting || !bundle
+              ? [0, 1, 2, 3, 4].map((i) => (
+                  <li key={i} className="prayer-row skeleton-row">
+                    <span className="sk sk-row-name" />
+                    <span className="sk sk-row-time" />
                   </li>
-                );
-              })}
-        </ul>
-      </section>
+                ))
+              : bundle.schedule.map((p, i) => {
+                  const classes = ["prayer-row"];
+                  if ((p.minutes ?? -1) < nowMin && i !== bundle.currentIndex) classes.push("past");
+                  if (i === bundle.currentIndex) classes.push("current");
+                  if ((p.minutes ?? -1) > nowMin) classes.push("upcoming");
+                  return (
+                    <li key={p.key} className={classes.join(" ")}>
+                      <span className="prayer-name">{p.name}</span>
+                      <span className="prayer-time">{p.time}</span>
+                    </li>
+                  );
+                })}
+          </ul>
+        </section>
+      </div>
       <TabBar />
     </div>
   );

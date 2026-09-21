@@ -7,7 +7,8 @@ function isStandalone(): boolean {
     window.matchMedia("(display-mode: standalone)").matches ||
     window.matchMedia("(display-mode: fullscreen)").matches ||
     window.matchMedia("(display-mode: minimal-ui)").matches ||
-    window.navigator.standalone === true
+    // iOS Safari legacy
+    (window.navigator as Navigator & { standalone?: boolean }).standalone === true
   );
 }
 
@@ -25,16 +26,30 @@ function syncViewportInsets() {
   root.style.setProperty("--sab-floor", `${floor}px`);
 }
 
+/** Browsers often update visualViewport a frame (or more) after orientationchange. */
+function syncAfterOrientation() {
+  syncViewportInsets();
+  requestAnimationFrame(() => {
+    syncViewportInsets();
+    window.setTimeout(syncViewportInsets, 50);
+    window.setTimeout(syncViewportInsets, 200);
+  });
+}
+
 export function useViewportInsets() {
   useEffect(() => {
     syncViewportInsets();
     window.addEventListener("resize", syncViewportInsets);
+    window.addEventListener("orientationchange", syncAfterOrientation);
+    window.addEventListener("pageshow", syncViewportInsets);
     window.visualViewport?.addEventListener("resize", syncViewportInsets);
     window.visualViewport?.addEventListener("scroll", syncViewportInsets);
     const mq = window.matchMedia("(display-mode: standalone)");
     mq.addEventListener?.("change", syncViewportInsets);
     return () => {
       window.removeEventListener("resize", syncViewportInsets);
+      window.removeEventListener("orientationchange", syncAfterOrientation);
+      window.removeEventListener("pageshow", syncViewportInsets);
       window.visualViewport?.removeEventListener("resize", syncViewportInsets);
       window.visualViewport?.removeEventListener("scroll", syncViewportInsets);
       mq.removeEventListener?.("change", syncViewportInsets);

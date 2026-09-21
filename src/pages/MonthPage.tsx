@@ -3,6 +3,9 @@ import { TabBar } from "../components/TabBar";
 import { CITY, getMonthTimes, MONTHS } from "../lib/prayer-calc";
 
 const TZ = CITY.timeZone;
+const SKELETON_ROWS = 10;
+
+type MonthRow = ReturnType<typeof getMonthTimes>[number];
 
 function todayParts() {
   const fmt = new Intl.DateTimeFormat("en-GB", {
@@ -20,8 +23,11 @@ function todayParts() {
 
 export function MonthPage() {
   const [view, setView] = useState(() => todayParts());
+  const [rows, setRows] = useState<MonthRow[] | null>(null);
+  const [loading, setLoading] = useState(true);
   const [hintHidden, setHintHidden] = useState(false);
   const gridWrapRef = useRef<HTMLDivElement>(null);
+  const loadGen = useRef(0);
 
   const updateScrollHint = useCallback(() => {
     const gridWrap = gridWrapRef.current;
@@ -31,21 +37,38 @@ export function MonthPage() {
     setHintHidden(!canScroll || scrolled);
   }, []);
 
-  const rows = getMonthTimes(view.year, view.month);
   const today = todayParts();
+
+  // Defer heavy month calc so shell + skeleton paint on the same tap as tab switch.
+  useEffect(() => {
+    const gen = ++loadGen.current;
+    setLoading(true);
+    setRows(null);
+    const timer = window.setTimeout(() => {
+      const next = getMonthTimes(view.year, view.month);
+      if (gen !== loadGen.current) return;
+      setRows(next);
+      setLoading(false);
+    }, 0);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [view]);
 
   useEffect(() => {
     const id = requestAnimationFrame(updateScrollHint);
     return () => cancelAnimationFrame(id);
-  }, [view, updateScrollHint]);
+  }, [view, rows, updateScrollHint]);
 
   useEffect(() => {
     const gridWrap = gridWrapRef.current;
     gridWrap?.addEventListener("scroll", updateScrollHint, { passive: true });
     window.addEventListener("resize", updateScrollHint);
+    window.addEventListener("orientationchange", updateScrollHint);
     return () => {
       gridWrap?.removeEventListener("scroll", updateScrollHint);
       window.removeEventListener("resize", updateScrollHint);
+      window.removeEventListener("orientationchange", updateScrollHint);
     };
   }, [updateScrollHint]);
 
@@ -86,7 +109,7 @@ export function MonthPage() {
         </div>
       </header>
 
-      <p className={`month-scroll-hint${hintHidden ? " is-hidden" : ""}`}>
+      <p className={`month-scroll-hint${hintHidden || loading ? " is-hidden" : ""}`}>
         Swipe sideways for Maghrib &amp; Isha →
       </p>
 
@@ -113,21 +136,47 @@ export function MonthPage() {
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => {
-              const isToday =
-                today.year === view.year && today.month === view.month && today.day === row.day;
-              return (
-                <tr key={row.day} className={isToday ? "today-row" : undefined}>
-                  <td className="col-day">{String(row.day).padStart(2, "0")}</td>
-                  <td className="col-wd">{row.weekday}</td>
-                  <td>{row.fajr}</td>
-                  <td>{row.dhuhr}</td>
-                  <td>{row.asr}</td>
-                  <td>{row.maghrib}</td>
-                  <td>{row.isha}</td>
-                </tr>
-              );
-            })}
+            {loading || !rows
+              ? Array.from({ length: SKELETON_ROWS }, (_, i) => (
+                  <tr key={`sk-${i}`} className="month-skel-row" aria-hidden="true">
+                    <td className="col-day">
+                      <span className="sk sk-month-day" />
+                    </td>
+                    <td className="col-wd">
+                      <span className="sk sk-month-wd" />
+                    </td>
+                    <td>
+                      <span className="sk sk-month-time" />
+                    </td>
+                    <td>
+                      <span className="sk sk-month-time" />
+                    </td>
+                    <td>
+                      <span className="sk sk-month-time" />
+                    </td>
+                    <td>
+                      <span className="sk sk-month-time" />
+                    </td>
+                    <td>
+                      <span className="sk sk-month-time" />
+                    </td>
+                  </tr>
+                ))
+              : rows.map((row) => {
+                  const isToday =
+                    today.year === view.year && today.month === view.month && today.day === row.day;
+                  return (
+                    <tr key={row.day} className={isToday ? "today-row" : undefined}>
+                      <td className="col-day">{String(row.day).padStart(2, "0")}</td>
+                      <td className="col-wd">{row.weekday}</td>
+                      <td>{row.fajr}</td>
+                      <td>{row.dhuhr}</td>
+                      <td>{row.asr}</td>
+                      <td>{row.maghrib}</td>
+                      <td>{row.isha}</td>
+                    </tr>
+                  );
+                })}
           </tbody>
         </table>
       </div>
