@@ -91,11 +91,11 @@ html, body, #root {
   box-sizing: border-box;
 }
 
-/* Portrait: pack hero+list from the top (no flex-grow void above tabs).
-   Tabs stay flush bottom via #tabbar-root { margin-top: auto }.
-   Short landscape can still shrink+scroll this region. */
+/* Portrait: today-body fills space above the tab bar; content packs from the top.
+   Prayer rows use space-between so leftover height is shared between rows —
+   not one hollow band under the list. */
 .app-today .today-body {
-  flex: 0 1 auto;
+  flex: 1 1 auto;
   min-height: 0;
   width: 100%;
   max-width: 480px;
@@ -110,12 +110,10 @@ html, body, #root {
   overscroll-behavior: contain;
   padding-left: max(18px, var(--safe-left));
   padding-right: max(18px, var(--safe-right));
-  /* Modest breathing room above tabs (~40–80px with normal margins) */
-  padding-bottom: 24px;
+  padding-bottom: 20px;
   box-sizing: border-box;
 }
 
-/* Tighter portrait rhythm — no growing empty band under the list */
 .app-today .hero {
   flex: 0 0 auto;
   margin-bottom: 16px;
@@ -123,7 +121,7 @@ html, body, #root {
 }
 
 .app-today .today {
-  flex: 0 0 auto;
+  flex: 1 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
@@ -131,10 +129,15 @@ html, body, #root {
 }
 
 .app-today .prayer-list {
-  flex: 0 0 auto;
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
+  justify-content: space-between;
+  gap: 0;
+}
+
+.app-today .prayer-row {
+  flex: 0 0 auto;
 }
 
 .topbar {
@@ -367,7 +370,9 @@ html, body, #root {
 #tabbar-root {
   flex-shrink: 0;
   flex-grow: 0;
-  margin-top: auto;
+  /* No margin-top:auto — that left a ~300px hollow band under the list.
+     .today-body grows (flex:1) so the bar stays at the shell bottom. */
+  margin-top: 0;
   width: 100%;
   max-width: none;
   align-self: stretch;
@@ -460,6 +465,8 @@ body.month-page {
 .month-app .month-header,
 .month-app .month-scroll-hint,
 .month-app .month-grid-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
   width: 100%;
   max-width: 720px;
   margin-left: auto;
