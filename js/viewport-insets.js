@@ -1,7 +1,8 @@
 /**
- * Android standalone PWAs often report env(safe-area-inset-bottom) as 0
- * even with a 3-button system nav. Prefer a measured visualViewport gap;
- * fall back to 48px (not 64) so the tab bar sits flush for the thumb.
+ * Size the app shell to the visible viewport. Only raise --sab-floor when
+ * we can measure real bottom chrome overlapping the layout viewport.
+ * Do NOT invent a constant Android floor — that creates a gap when the
+ * webview already sits above the system nav.
  */
 const ANDROID = /Android/i.test(navigator.userAgent);
 
@@ -21,13 +22,9 @@ function syncViewportInsets() {
   root.style.setProperty("--app-vh", `${Math.round(height)}px`);
 
   let floor = 0;
-  if (ANDROID && isStandalone()) {
-    // Prefer measured occlusion; 48px floor when env/vv lie (designer: 48–56).
-    floor = 48;
-    if (vv) {
-      const gap = Math.max(0, window.innerHeight - (vv.height + vv.offsetTop));
-      if (gap >= 20) floor = Math.round(gap);
-    }
+  if (ANDROID && isStandalone() && vv) {
+    const gap = Math.max(0, window.innerHeight - (vv.height + vv.offsetTop));
+    if (gap >= 20) floor = Math.round(gap);
   }
   root.style.setProperty("--sab-floor", `${floor}px`);
 }

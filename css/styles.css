@@ -17,7 +17,7 @@
   --app-bottom-inset: max(var(--safe-bottom), var(--sab-floor));
   --app-vh: 100dvh;
   --tabbar-tabs: 48px;
-  --tabbar-height: calc(6px + var(--tabbar-tabs) + 6px + var(--app-bottom-inset));
+  --tabbar-height: calc(6px + var(--tabbar-tabs) + 6px + var(--app-bottom-inset)); /* in-flow; kept for any legacy refs */
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
@@ -36,7 +36,7 @@ html, body {
 .app {
   max-width: 480px;
   margin: 0 auto;
-  min-height: 100dvh;
+  min-height: var(--app-vh);
   display: flex;
   flex-direction: column;
   padding: 16px 18px 24px;
@@ -44,10 +44,10 @@ html, body {
 }
 
 .app.app-today {
-  /* side padding owned here; bottom must clear the fixed shared tabbar */
+  /* side padding for content; tabbar is in-flow at the bottom */
   padding-left: 18px;
   padding-right: 18px;
-  padding-bottom: var(--tabbar-height);
+  padding-bottom: 0;
 }
 
 /* Today: one screen, no page scroll — Month lives in the top bar */
@@ -58,7 +58,7 @@ html, body {
   padding-top: max(12px, env(safe-area-inset-top, 0px));
   padding-left: 18px;
   padding-right: 18px;
-  padding-bottom: var(--tabbar-height);
+  padding-bottom: 0;
   box-sizing: border-box;
 }
 
@@ -299,16 +299,24 @@ html, body {
 .sk-row-time { width: 52px; height: 16px; }
 
 
-/* Bottom tabs — one shared full-bleed bar (escapes .app max-width / side padding) */
+/* Bottom tabs — in-flow at end of the app shell (same idea as a sticky top nav).
+   Shell height is --app-vh (visible viewport), so the bar sits flush to the
+   visible bottom with no invented Android floor gap. */
 #tabbar-root {
-  /* mount point; bar itself is fixed */
+  flex-shrink: 0;
+  margin-top: auto;
+  /* Full-bleed escape from .app horizontal padding / max-width */
+  width: 100vw;
+  max-width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
 }
 
 .tabbar {
-  position: fixed;
+  position: sticky;
+  bottom: 0;
   left: 0;
   right: 0;
-  bottom: 0;
   width: 100%;
   max-width: none;
   z-index: 40;
@@ -316,9 +324,7 @@ html, body {
   grid-template-columns: 1fr 1fr;
   gap: 0;
   margin: 0;
-  /* Stick to screen bottom; paint into inset so the bar feels glued down */
-  padding: 6px 0 0;
-  padding-bottom: max(6px, var(--app-bottom-inset));
+  padding: 6px 0 max(6px, var(--app-bottom-inset));
   border-top: 1px solid var(--border);
   background: var(--bg);
   box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.16);
@@ -381,7 +387,7 @@ body.month-page {
   max-width: 720px;
   width: 100%;
   padding: 0;
-  padding-bottom: var(--tabbar-height);
+  padding-bottom: 0;
   height: var(--app-vh);
   max-height: var(--app-vh);
   overflow: hidden;
