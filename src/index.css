@@ -91,9 +91,11 @@ html, body, #root {
   box-sizing: border-box;
 }
 
-/* Scrollable body between topbar and tabs — short landscape must not clip Isha/tabs */
+/* Portrait: pack hero+list from the top (no flex-grow void above tabs).
+   Tabs stay flush bottom via #tabbar-root { margin-top: auto }.
+   Short landscape can still shrink+scroll this region. */
 .app-today .today-body {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-height: 0;
   width: 100%;
   max-width: 480px;
@@ -101,12 +103,23 @@ html, body, #root {
   margin-right: auto;
   display: flex;
   flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
   overflow: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   padding-left: max(18px, var(--safe-left));
   padding-right: max(18px, var(--safe-right));
+  /* Modest breathing room above tabs (~40–80px with normal margins) */
+  padding-bottom: 24px;
   box-sizing: border-box;
+}
+
+/* Tighter portrait rhythm — no growing empty band under the list */
+.app-today .hero {
+  flex: 0 0 auto;
+  margin-bottom: 16px;
+  min-height: 0;
 }
 
 .app-today .today {
@@ -114,6 +127,7 @@ html, body, #root {
   min-height: 0;
   display: flex;
   flex-direction: column;
+  justify-content: flex-start;
 }
 
 .app-today .prayer-list {
@@ -649,11 +663,16 @@ body.month-page {
   text-align: right;
 }
 
-/* Landscape: short viewports — keep tabs visible; body scrolls */
+/* Landscape: short viewports — keep tabs visible; body may fill+scroll */
 @media (orientation: landscape) {
+  .app-today .today-body {
+    flex: 1 1 auto;
+    padding-bottom: 12px;
+  }
+
   .app-today .hero {
     min-height: 0;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
   }
 
   .app-today .next-name {
