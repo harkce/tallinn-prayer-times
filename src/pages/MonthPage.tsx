@@ -142,6 +142,15 @@ export function MonthPage() {
           <span>Isha</span>
         </div>
         <table className="month-grid">
+          <colgroup>
+            <col className="col-day" />
+            <col className="col-wd" />
+            <col className="col-time" />
+            <col className="col-time" />
+            <col className="col-time" />
+            <col className="col-time" />
+            <col className="col-time" />
+          </colgroup>
           <thead className="sr-only">
             <tr>
               <th scope="col">Day</th>

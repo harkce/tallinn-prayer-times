@@ -555,7 +555,8 @@ body.month-page {
 }
 
 .month-grid {
-  width: max-content;
+  /* Same width model as .month-labels so header + body columns line up */
+  width: 100%;
   min-width: 520px;
   border-collapse: separate;
   border-spacing: 0;
@@ -567,11 +568,13 @@ body.month-page {
 
 .month-grid col.col-day { width: 44px; }
 .month-grid col.col-wd { width: 40px; }
-.month-grid col.col-time { width: 58px; }
+/* Remaining width splits evenly across the five prayer columns (matches labels 1fr). */
+.month-grid col.col-time { width: auto; }
 
 .month-grid th,
 .month-grid td {
   padding: 10px 10px;
+  box-sizing: border-box;
   text-align: right;
   border-bottom: 1px solid var(--border);
   white-space: nowrap;
@@ -603,11 +606,14 @@ body.month-page {
   top: 0;
   z-index: 5;
   display: grid;
+  /* Tracks match table col widths; padding lives on spans like td padding */
   grid-template-columns: 44px 40px repeat(5, minmax(58px, 1fr));
   gap: 0;
+  width: 100%;
   min-width: 520px;
-  padding: 10px 12px;
+  padding: 0;
   margin: 0;
+  box-sizing: border-box;
   background: var(--bg);
   border-bottom: 1px solid var(--border);
   color: var(--text-muted);
@@ -618,6 +624,8 @@ body.month-page {
 }
 
 .month-labels span {
+  box-sizing: border-box;
+  padding: 10px 10px;
   text-align: right;
 }
 
