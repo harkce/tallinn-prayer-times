@@ -630,21 +630,42 @@ function getWeekday(year, month, day) {
   return WEEKDAYS[new Date(Date.UTC(year, month - 1, day)).getUTCDay()];
 }
 
+/** Canonical English Hijri month names — avoid Intl `month: "long"` (Android can emit Gregorian names). */
+const HIJRI_MONTHS = [
+  "Muharram",
+  "Safar",
+  "Rabi al-Awwal",
+  "Rabi al-Thani",
+  "Jumada al-Awwal",
+  "Jumada al-Thani",
+  "Rajab",
+  "Shaban",
+  "Ramadan",
+  "Shawwal",
+  "Dhul Qadah",
+  "Dhul Hijjah"
+];
+
 function getHijriDate(year, month, day, timeZone) {
   try {
     const formatter = new Intl.DateTimeFormat("en-u-ca-islamic-umalqura", {
       timeZone,
       day: "numeric",
-      month: "long",
+      month: "numeric",
       year: "numeric"
     });
 
     const parts = formatter.formatToParts(new Date(Date.UTC(year, month - 1, day, 12)));
     const getPart = (type) => parts.find((part) => part.type === type)?.value;
+    const monthIndex = Number(getPart("month"));
+    const monthName =
+      monthIndex >= 1 && monthIndex <= 12
+        ? HIJRI_MONTHS[monthIndex - 1]
+        : normalizeHijriMonthName(getPart("month") || "");
 
     return {
       day: getPart("day"),
-      month: normalizeHijriMonthName(getPart("month") || ""),
+      month: monthName,
       year: (getPart("year") || "").replace(/\s*AH$/i, "")
     };
   } catch (error) {
@@ -667,9 +688,9 @@ function normalizeHijriMonthName(value) {
   if (plain.includes("shaban") || plain.includes("sha ban")) return "Shaban";
   if (plain.includes("hijjah")) return "Dhul Hijjah";
   if (plain.includes("qidah") || plain.includes("qadah") || plain.includes("qi dah")) return "Dhul Qadah";
-  if (plain.includes("rabi") && (plain.includes("ii") || plain.includes("second"))) return "Rabi al-Thani";
+  if (plain.includes("rabi") && (plain.includes("ii") || plain.includes("second") || plain.includes("thani"))) return "Rabi al-Thani";
   if (plain.includes("rabi")) return "Rabi al-Awwal";
-  if (plain.includes("jumada") && (plain.includes("ii") || plain.includes("second"))) return "Jumada al-Thani";
+  if (plain.includes("jumada") && (plain.includes("ii") || plain.includes("second") || plain.includes("thani"))) return "Jumada al-Thani";
   if (plain.includes("jumada")) return "Jumada al-Awwal";
 
   return value;
