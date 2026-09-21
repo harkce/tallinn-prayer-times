@@ -5,13 +5,14 @@ import {
   getHijriParts,
   HIJRI_MONTHS,
   loadHijriMonthTimesAsync,
+  daysInMonth,
   loadMonthTimesAsync,
   MONTHS,
   shiftHijriMonth
 } from "../lib/prayer-calc";
 
 const TZ = CITY.timeZone;
-const SKELETON_ROWS = 10;
+const SKELETON_ROWS_FALLBACK = 30;
 const MIN_SKELETON_MS = 320;
 const CAL_STORAGE_KEY = "tallinn-month-calendar-v1";
 
@@ -302,10 +303,18 @@ export function MonthPage() {
           </thead>
           <tbody>
             {loading || !rows
-              ? Array.from({ length: SKELETON_ROWS }, (_, i) => (
+              ? Array.from(
+                  {
+                    length:
+                      view.mode === "gregorian"
+                        ? daysInMonth(view.year, view.month)
+                        : SKELETON_ROWS_FALLBACK
+                  },
+                  (_, i) => (
                   <tr key={`sk-${i}`} className="month-skel-row" aria-hidden="true">
                     <td className="col-day">
                       <span className="sk sk-month-day" />
+                      <span className="sk sk-month-day-sec" />
                     </td>
                     <td className="col-wd">
                       <span className="sk sk-month-wd" />

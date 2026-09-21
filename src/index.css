@@ -750,13 +750,35 @@ body.month-page {
 
 
 
-/* Month skeleton — same cell padding/row height as real data to avoid jump */
-.month-skel-row td {
-  height: 41px; /* ~10px+10px padding + ~21px line matches real rows */
+/* Month skeleton — match dual-line day cells so row height doesn't jump on load */
+.month-app.has-dual-day .month-grid td,
+.month-app.has-dual-day .month-grid th {
+  height: 52px; /* 10+10 pad + primary ~16 + gap + secondary ~12 */
   vertical-align: middle;
 }
 
-.sk-month-day { width: 22px; height: 14px; display: inline-block; }
+.month-skel-row td {
+  height: 52px;
+  vertical-align: middle;
+}
+
+.month-skel-row td.col-day .sk-month-day,
+.month-skel-row td.col-day .sk-month-day-sec {
+  /* stacked like day-primary / day-secondary */
+}
+
+.sk-month-day {
+  width: 22px;
+  height: 14px;
+  display: block;
+}
+
+.sk-month-day-sec {
+  width: 36px;
+  height: 10px;
+  display: block;
+}
+
 .sk-month-wd { width: 28px; height: 14px; display: inline-block; }
 .sk-month-time { width: 40px; height: 14px; display: inline-block; margin-left: auto; }
 
