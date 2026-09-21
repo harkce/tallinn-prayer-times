@@ -13,8 +13,8 @@ export default function App() {
     document.documentElement.classList.toggle("month-page", isMonth);
     document.body.classList.toggle("month-page", isMonth);
     document.title = isMonth
-      ? "This month · Tallinn Prayer Times"
-      : "Tallinn Prayer Times";
+      ? "This month · Prayer Times"
+      : "Prayer Times";
   }, [isMonth]);
 
   return (

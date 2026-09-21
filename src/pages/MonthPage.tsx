@@ -32,6 +32,7 @@ type MonthRow = {
   maghrib: string;
   isha: string;
   gregorianLabel?: string;
+  hijriLabel?: string;
   gYear?: number;
   gMonth?: number;
   gDay?: number;
@@ -136,6 +137,19 @@ export function MonthPage() {
     };
   }, [view]);
 
+  // Center today's row in the viewport when this month (Gregorian or Hijri) contains today.
+  useEffect(() => {
+    if (loading || !rows?.length) return;
+    const wrap = gridWrapRef.current;
+    if (!wrap) return;
+    const todayEl = wrap.querySelector("tr.today-row") as HTMLElement | null;
+    if (!todayEl) return;
+    const id = requestAnimationFrame(() => {
+      todayEl.scrollIntoView({ block: "center", inline: "nearest" });
+    });
+    return () => cancelAnimationFrame(id);
+  }, [loading, rows, view]);
+
   useEffect(() => {
     const id = requestAnimationFrame(updateScrollHint);
     return () => cancelAnimationFrame(id);
@@ -215,7 +229,7 @@ export function MonthPage() {
       : `${MONTHS[view.month - 1]} ${view.year}`;
 
   return (
-    <div className={`app month-app${view.mode === "hijri" ? " is-hijri" : ""}`}>
+    <div className="app month-app has-dual-day">
       <header className="month-header">
         <span className="month-header-spacer" aria-hidden="true" />
         <div className="month-title-block">
@@ -329,6 +343,9 @@ export function MonthPage() {
                         <span className="day-primary">{String(row.day).padStart(2, "0")}</span>
                         {view.mode === "hijri" && row.gregorianLabel ? (
                           <span className="day-secondary">{row.gregorianLabel}</span>
+                        ) : null}
+                        {view.mode === "gregorian" && row.hijriLabel ? (
+                          <span className="day-secondary">{row.hijriLabel}</span>
                         ) : null}
                       </td>
                       <td className="col-wd">{row.weekday}</td>

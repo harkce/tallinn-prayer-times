@@ -17,8 +17,8 @@ export default defineConfig({
         "icons/icon-maskable-512.png"
       ],
       manifest: {
-        name: "Tallinn Prayer Times",
-        short_name: "Tallinn PT",
+        name: "Prayer Times",
+        short_name: "Prayer Times",
         description: "Next prayer and daily times for Tallinn, Estonia.",
         start_url: "./",
         scope: "./",

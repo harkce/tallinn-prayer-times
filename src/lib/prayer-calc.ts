@@ -646,6 +646,27 @@ export const HIJRI_MONTHS = [
   "Dhul Hijjah"
 ];
 
+/** Short Hijri month labels (CLDR-style) for compact secondary dates. */
+export const HIJRI_MONTH_ABBREV = [
+  "Muh",
+  "Saf",
+  "Rab I",
+  "Rab II",
+  "Jum I",
+  "Jum II",
+  "Raj",
+  "Sha",
+  "Ram",
+  "Shaw",
+  "Dhu Q",
+  "Dhu H"
+] as const;
+
+export function formatHijriShort(parts: { day: number; month: number } | null | undefined) {
+  if (!parts || parts.month < 1 || parts.month > 12) return "";
+  return `${parts.day} ${HIJRI_MONTH_ABBREV[parts.month - 1]}`;
+}
+
 function getHijriDate(year, month, day, timeZone) {
   try {
     const formatter = new Intl.DateTimeFormat("en-u-ca-islamic-umalqura", {
@@ -961,19 +982,34 @@ export function getDayTimes(year: number, month: number, day: number) {
 }
 
 export function getMonthTimes(year: number, month: number) {
-  const key = `${year}-${month}`;
+  const key = `g-v2-${year}-${month}`;
   const cached = monthTimesCache.get(key);
   if (cached) return cached;
   const days = daysInMonth(year, month);
   const rows = [];
   for (let day = 1; day <= days; day += 1) {
-    rows.push({ day, ...getDayTimes(year, month, day) });
+        const times = getDayTimes(year, month, day);
+    const hijri = getHijriParts(year, month, day);
+    rows.push({
+      day,
+      ...times,
+      hijriLabel: formatHijriShort(hijri),
+      hijriDay: hijri?.day ?? 0,
+      hijriMonth: hijri?.month ?? 0,
+      hijriYear: hijri?.year ?? 0
+    });
   }
   monthTimesCache.set(key, rows);
   return rows;
 }
 
-type MonthRow = ReturnType<typeof getDayTimes> & { day: number };
+type MonthRow = ReturnType<typeof getDayTimes> & {
+  day: number;
+  hijriLabel: string;
+  hijriDay: number;
+  hijriMonth: number;
+  hijriYear: number;
+};
 
 const monthTimesCache = new Map<string, MonthRow[]>();
 
@@ -1001,7 +1037,16 @@ export function loadMonthTimesAsync(
       }
       const end = Math.min(day + chunk - 1, days);
       for (; day <= end; day += 1) {
-        rows.push({ day, ...getDayTimes(year, month, day) });
+        const times = getDayTimes(year, month, day);
+        const hijri = getHijriParts(year, month, day);
+        rows.push({
+          day,
+          ...times,
+          hijriLabel: formatHijriShort(hijri),
+          hijriDay: hijri?.day ?? 0,
+          hijriMonth: hijri?.month ?? 0,
+          hijriYear: hijri?.year ?? 0
+        });
       }
       if (day > days) {
         monthTimesCache.set(key, rows);
