@@ -11,7 +11,7 @@ const MINUTE_KEYS = [
   "maghribMinutes",
   "ishaMinutes"
 ] as const;
-const CACHE_KEY = "tallinn-prayer-cache-v1";
+const CACHE_KEY = "tallinn-prayer-cache-v2";
 const TZ = CITY.timeZone;
 const BOOT_MS = 320;
 
@@ -42,6 +42,7 @@ type Bundle = {
   totalSeconds: number | null;
   generatedAt: string;
   todayLabel?: string;
+  hijriLabel?: string;
 };
 
 type CachePayload = {
@@ -51,6 +52,7 @@ type CachePayload = {
   nextIsTomorrow: boolean;
   currentIndex: number;
   todayLabel: string;
+  hijriLabel: string;
   generatedAt: string;
 };
 
@@ -88,6 +90,11 @@ function partsInTz(date = new Date()): TzParts {
 function formatShortDate(parts: Pick<TzParts, "weekday" | "day" | "month">) {
   const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   return `${parts.weekday.slice(0, 3)} ${parts.day} ${months[parts.month - 1]}`;
+}
+
+function formatHijriLabel(hijri: { day?: string; month: string; year: string } | null | undefined) {
+  if (!hijri?.day || !hijri.month || !hijri.year) return "";
+  return `${hijri.day} ${hijri.month} ${hijri.year}`;
 }
 
 function addCalendarDays(year: number, month: number, day: number, amount: number) {
@@ -146,7 +153,9 @@ function computeBundle(now = new Date()): Bundle {
     nextIsTomorrow,
     currentIndex,
     totalSeconds,
-    generatedAt: now.toISOString()
+    generatedAt: now.toISOString(),
+    todayLabel: formatShortDate(today),
+    hijriLabel: formatHijriLabel(todayTimes.hijri)
   };
 }
 
@@ -167,7 +176,8 @@ function saveCache(bundle: Bundle) {
       next: bundle.next,
       nextIsTomorrow: bundle.nextIsTomorrow,
       currentIndex: bundle.currentIndex,
-      todayLabel: formatShortDate(bundle.today),
+      todayLabel: bundle.todayLabel ?? formatShortDate(bundle.today),
+      hijriLabel: bundle.hijriLabel ?? "",
       generatedAt: bundle.generatedAt
     };
     localStorage.setItem(CACHE_KEY, JSON.stringify(payload));
@@ -201,6 +211,7 @@ function bundleFromCache(): Bundle | null {
       minuteOfDay: -1
     },
     todayLabel: cached.todayLabel,
+    hijriLabel: cached.hijriLabel ?? "",
     schedule: cached.schedule,
     next: cached.next,
     nextIsTomorrow: cached.nextIsTomorrow,
@@ -241,6 +252,7 @@ export function TodayPage() {
             minuteOfDay: -1
           },
           todayLabel: cached.todayLabel,
+          hijriLabel: cached.hijriLabel ?? "",
           schedule: cached.schedule,
           next: cached.next,
           nextIsTomorrow: cached.nextIsTomorrow,
@@ -309,17 +321,25 @@ export function TodayPage() {
       : bundle
         ? formatShortDate(bundle.today)
         : "—";
+  const hijriText = bundle?.hijriLabel || "";
   const nowMin = bundle?.today?.minuteOfDay ?? -1;
 
   return (
     <div className={`app app-today${booting ? " is-booting" : ""}${bundle ? " has-data" : ""}`} id="app">
       <header className="topbar">
         <div className="topbar-left">
-          <span className="city">Tallinn</span>
-          <span className="sep" aria-hidden="true">
-            ·
-          </span>
-          <span className="date-line">{dateText}</span>
+          <div className="topbar-primary">
+            <span className="city">Tallinn</span>
+            <span className="sep" aria-hidden="true">
+              ·
+            </span>
+            <span className="date-line">{dateText}</span>
+          </div>
+          {hijriText ? (
+            <span className="hijri-line" aria-label={`Hijri date ${hijriText}`}>
+              {hijriText}
+            </span>
+          ) : null}
         </div>
         <div className="topbar-right">
           <span className="offline-pill" hidden={!offline}>
