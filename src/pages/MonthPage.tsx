@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { TabBar } from "../components/TabBar";
-import { CITY, getMonthTimes, MONTHS } from "../lib/prayer-calc";
+import { CITY, loadMonthTimesAsync, MONTHS } from "../lib/prayer-calc";
 
 const TZ = CITY.timeZone;
 const SKELETON_ROWS = 10;
 /** Keep shimmer on screen long enough to be perceptible even when calc is instant. */
 const MIN_SKELETON_MS = 320;
 
-type MonthRow = ReturnType<typeof getMonthTimes>[number];
+type MonthRow = Awaited<ReturnType<typeof loadMonthTimesAsync>>[number];
 
 function todayParts() {
   const fmt = new Intl.DateTimeFormat("en-GB", {
@@ -48,28 +48,31 @@ export function MonthPage() {
     setLoading(true);
     setRows(null);
     const started = performance.now();
-    let timer = 0;
-    let raf2 = 0;
+    let settleTimer = 0;
+    let cancelled = false;
 
+    // Paint skeleton, then compute in yielded chunks so Today/prev-next stay tappable.
     const raf1 = requestAnimationFrame(() => {
-      raf2 = requestAnimationFrame(() => {
-        timer = window.setTimeout(() => {
-          if (gen !== loadGen.current) return;
-          const next = getMonthTimes(view.year, view.month);
+      void loadMonthTimesAsync(view.year, view.month, () => cancelled || gen !== loadGen.current)
+        .then((next) => {
+          if (cancelled || gen !== loadGen.current) return;
           const remain = Math.max(0, MIN_SKELETON_MS - (performance.now() - started));
-          timer = window.setTimeout(() => {
-            if (gen !== loadGen.current) return;
+          settleTimer = window.setTimeout(() => {
+            if (cancelled || gen !== loadGen.current) return;
             setRows(next);
             setLoading(false);
           }, remain);
-        }, 0);
-      });
+        })
+        .catch((err) => {
+          if (err?.name === "AbortError") return;
+          console.error(err);
+        });
     });
 
     return () => {
+      cancelled = true;
       cancelAnimationFrame(raf1);
-      cancelAnimationFrame(raf2);
-      clearTimeout(timer);
+      clearTimeout(settleTimer);
     };
   }, [view]);
 

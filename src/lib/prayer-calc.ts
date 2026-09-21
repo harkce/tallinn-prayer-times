@@ -793,12 +793,58 @@ export function getDayTimes(year: number, month: number, day: number) {
 }
 
 export function getMonthTimes(year: number, month: number) {
+  const key = `${year}-${month}`;
+  const cached = monthTimesCache.get(key);
+  if (cached) return cached;
   const days = daysInMonth(year, month);
   const rows = [];
   for (let day = 1; day <= days; day += 1) {
     rows.push({ day, ...getDayTimes(year, month, day) });
   }
+  monthTimesCache.set(key, rows);
   return rows;
+}
+
+type MonthRow = ReturnType<typeof getDayTimes> & { day: number };
+
+const monthTimesCache = new Map<string, MonthRow[]>();
+
+/** Yield between day chunks so the UI (tabs, nav) stays responsive during first compute. */
+export function loadMonthTimesAsync(
+  year: number,
+  month: number,
+  isCancelled: () => boolean = () => false
+): Promise<MonthRow[]> {
+  const key = `${year}-${month}`;
+  const cached = monthTimesCache.get(key);
+  if (cached) return Promise.resolve(cached);
+
+  const days = daysInMonth(year, month);
+  const rows: MonthRow[] = [];
+  const chunk = 2; // ~2 days per turn keeps the main thread free for taps
+
+  return new Promise((resolve, reject) => {
+    let day = 1;
+
+    const step = () => {
+      if (isCancelled()) {
+        reject(new DOMException("cancelled", "AbortError"));
+        return;
+      }
+      const end = Math.min(day + chunk - 1, days);
+      for (; day <= end; day += 1) {
+        rows.push({ day, ...getDayTimes(year, month, day) });
+      }
+      if (day > days) {
+        monthTimesCache.set(key, rows);
+        resolve(rows);
+        return;
+      }
+      globalThis.setTimeout(step, 0);
+    };
+
+    globalThis.setTimeout(step, 0);
+  });
 }
 
 export { MONTHS, WEEKDAYS, METHOD, ISHA_MONTH_RULES, calculatePrayerTimes, formatPrayerTime, daysInMonth, getWeekday };
