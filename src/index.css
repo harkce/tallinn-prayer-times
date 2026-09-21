@@ -489,7 +489,71 @@ body.month-page {
 }
 
 .month-app .month-header,
-.month-app .month-scroll-hint {
+.month-app .month-scroll-hint,
+.month-app .month-cal-toggle {
+  flex: 0 0 auto;
+}
+
+.month-cal-toggle {
+  display: inline-flex;
+  align-self: center;
+  margin: 8px auto 0;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--chip-bg, rgba(255, 255, 255, 0.06));
+  border: 1px solid var(--border);
+  gap: 2px;
+}
+
+.month-cal-toggle button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 6px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.month-cal-toggle button.is-active {
+  background: var(--bg-elev, rgba(255, 255, 255, 0.1));
+  color: var(--accent);
+}
+
+.day-primary {
+  display: block;
+  line-height: 1.2;
+}
+
+.day-secondary {
+  display: block;
+  margin-top: 2px;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-muted);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.month-app.is-hijri .month-grid col.col-day,
+.month-app.is-hijri .month-labels {
+  /* day col a bit wider for secondary gregorian label */
+}
+
+.month-app.is-hijri .month-grid col.col-day {
+  width: 56px;
+}
+
+.month-app.is-hijri .month-labels {
+  grid-template-columns: 56px 40px repeat(5, minmax(58px, 1fr));
+}
+
+.month-scroll-hint {
   flex: 0 0 auto;
 }
 

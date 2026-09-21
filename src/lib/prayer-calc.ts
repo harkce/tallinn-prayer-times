@@ -631,7 +631,7 @@ function getWeekday(year, month, day) {
 }
 
 /** Canonical English Hijri month names — avoid Intl `month: "long"` (Android can emit Gregorian names). */
-const HIJRI_MONTHS = [
+export const HIJRI_MONTHS = [
   "Muharram",
   "Safar",
   "Rabi al-Awwal",
@@ -695,6 +695,174 @@ function normalizeHijriMonthName(value) {
 
   return value;
 }
+
+export type HijriParts = {
+  year: number;
+  month: number;
+  day: number;
+  monthName: string;
+};
+
+/** Numeric Umm al-Qura parts for a Gregorian civil date (Tallinn TZ noon). */
+export function getHijriParts(year: number, month: number, day: number): HijriParts | null {
+  try {
+    const formatter = new Intl.DateTimeFormat("en-u-ca-islamic-umalqura", {
+      timeZone: CITY.timeZone,
+      day: "numeric",
+      month: "numeric",
+      year: "numeric"
+    });
+    const parts = formatter.formatToParts(new Date(Date.UTC(year, month - 1, day, 12)));
+    const getPart = (type: string) => parts.find((part) => part.type === type)?.value;
+    const monthIndex = Number(getPart("month"));
+    const monthName =
+      monthIndex >= 1 && monthIndex <= 12
+        ? HIJRI_MONTHS[monthIndex - 1]
+        : normalizeHijriMonthName(getPart("month") || "");
+    return {
+      year: Number((getPart("year") || "").replace(/\s*AH$/i, "")),
+      month: monthIndex >= 1 && monthIndex <= 12 ? monthIndex : HIJRI_MONTHS.indexOf(monthName) + 1,
+      day: Number(getPart("day")),
+      monthName
+    };
+  } catch {
+    return null;
+  }
+}
+
+function addGregorianDays(year: number, month: number, day: number, delta: number) {
+  const date = new Date(Date.UTC(year, month - 1, day + delta, 12));
+  return {
+    year: date.getUTCFullYear(),
+    month: date.getUTCMonth() + 1,
+    day: date.getUTCDate()
+  };
+}
+
+/** Rough Gregorian seed for a Hijri year/month (refined by walk). */
+function estimateGregorianForHijri(hijriYear: number, hijriMonth: number) {
+  const islamicDays =
+    Math.floor((hijriYear - 1) * 354.36667) + Math.floor((hijriMonth - 1) * 29.53059) + 1;
+  const epoch = Date.UTC(622, 6, 16);
+  const date = new Date(epoch + islamicDays * 86400000);
+  return {
+    year: date.getUTCFullYear(),
+    month: date.getUTCMonth() + 1,
+    day: date.getUTCDate()
+  };
+}
+
+export function findHijriMonthStart(hijriYear: number, hijriMonth: number) {
+  let g = estimateGregorianForHijri(hijriYear, hijriMonth);
+  for (let i = 0; i < 60; i += 1) {
+    const h = getHijriParts(g.year, g.month, g.day);
+    if (!h || !h.month) {
+      g = addGregorianDays(g.year, g.month, g.day, 5);
+      continue;
+    }
+    if (h.year === hijriYear && h.month === hijriMonth) {
+      while (true) {
+        const prev = addGregorianDays(g.year, g.month, g.day, -1);
+        const ph = getHijriParts(prev.year, prev.month, prev.day);
+        if (!ph || ph.year !== hijriYear || ph.month !== hijriMonth) break;
+        g = prev;
+      }
+      return g;
+    }
+    if (h.year > hijriYear || (h.year === hijriYear && h.month > hijriMonth)) {
+      g = addGregorianDays(g.year, g.month, g.day, -12);
+    } else {
+      g = addGregorianDays(g.year, g.month, g.day, 12);
+    }
+  }
+  return g;
+}
+
+export function shiftHijriMonth(hijriYear: number, hijriMonth: number, delta: number) {
+  let year = hijriYear;
+  let month = hijriMonth + delta;
+  while (month < 1) {
+    month += 12;
+    year -= 1;
+  }
+  while (month > 12) {
+    month -= 12;
+    year += 1;
+  }
+  return { year, month };
+}
+
+function formatGregorianShort(year: number, month: number, day: number) {
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  return `${day} ${months[month - 1]}`;
+}
+
+export type HijriMonthRow = {
+  day: number;
+  weekday: string;
+  fajr: string;
+  dhuhr: string;
+  asr: string;
+  maghrib: string;
+  isha: string;
+  gregorianLabel: string;
+  gYear: number;
+  gMonth: number;
+  gDay: number;
+};
+
+const hijriMonthTimesCache = new Map<string, HijriMonthRow[]>();
+
+export function loadHijriMonthTimesAsync(
+  hijriYear: number,
+  hijriMonth: number,
+  isCancelled: () => boolean = () => false
+): Promise<HijriMonthRow[]> {
+  const key = `h-${hijriYear}-${hijriMonth}`;
+  const cached = hijriMonthTimesCache.get(key);
+  if (cached) return Promise.resolve(cached);
+
+  return new Promise((resolve, reject) => {
+    const start = findHijriMonthStart(hijriYear, hijriMonth);
+    const rows: HijriMonthRow[] = [];
+    let g = { ...start };
+    const chunk = 2;
+
+    const step = () => {
+      if (isCancelled()) {
+        reject(new DOMException("cancelled", "AbortError"));
+        return;
+      }
+      for (let i = 0; i < chunk; i += 1) {
+        const h = getHijriParts(g.year, g.month, g.day);
+        if (!h || h.year !== hijriYear || h.month !== hijriMonth) {
+          hijriMonthTimesCache.set(key, rows);
+          resolve(rows);
+          return;
+        }
+        const times = getDayTimes(g.year, g.month, g.day);
+        rows.push({
+          day: h.day,
+          weekday: times.weekday,
+          fajr: times.fajr,
+          dhuhr: times.dhuhr,
+          asr: times.asr,
+          maghrib: times.maghrib,
+          isha: times.isha,
+          gregorianLabel: formatGregorianShort(g.year, g.month, g.day),
+          gYear: g.year,
+          gMonth: g.month,
+          gDay: g.day
+        });
+        g = addGregorianDays(g.year, g.month, g.day, 1);
+      }
+      globalThis.setTimeout(step, 0);
+    };
+
+    globalThis.setTimeout(step, 0);
+  });
+}
+
 
 function formatPrayerTime(minutes, mode = "round") {
   if (minutes === null || Number.isNaN(minutes)) return "--";

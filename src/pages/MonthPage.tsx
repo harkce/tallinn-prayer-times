@@ -1,13 +1,41 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { TabBar } from "../components/TabBar";
-import { CITY, loadMonthTimesAsync, MONTHS } from "../lib/prayer-calc";
+import {
+  CITY,
+  getHijriParts,
+  HIJRI_MONTHS,
+  loadHijriMonthTimesAsync,
+  loadMonthTimesAsync,
+  MONTHS,
+  shiftHijriMonth
+} from "../lib/prayer-calc";
 
 const TZ = CITY.timeZone;
 const SKELETON_ROWS = 10;
-/** Keep shimmer on screen long enough to be perceptible even when calc is instant. */
 const MIN_SKELETON_MS = 320;
+const CAL_STORAGE_KEY = "tallinn-month-calendar-v1";
 
-type MonthRow = Awaited<ReturnType<typeof loadMonthTimesAsync>>[number];
+type CalMode = "gregorian" | "hijri";
+
+type ViewState = {
+  mode: CalMode;
+  year: number;
+  month: number;
+};
+
+type MonthRow = {
+  day: number;
+  weekday: string;
+  fajr: string;
+  dhuhr: string;
+  asr: string;
+  maghrib: string;
+  isha: string;
+  gregorianLabel?: string;
+  gYear?: number;
+  gMonth?: number;
+  gDay?: number;
+};
 
 function todayParts() {
   const fmt = new Intl.DateTimeFormat("en-GB", {
@@ -23,8 +51,36 @@ function todayParts() {
   return values as { year: number; month: number; day: number };
 }
 
+function readCalMode(): CalMode {
+  try {
+    const raw = localStorage.getItem(CAL_STORAGE_KEY);
+    if (raw === "hijri" || raw === "gregorian") return raw;
+  } catch {
+    /* ignore */
+  }
+  return "gregorian";
+}
+
+function writeCalMode(mode: CalMode) {
+  try {
+    localStorage.setItem(CAL_STORAGE_KEY, mode);
+  } catch {
+    /* ignore */
+  }
+}
+
+function initialView(): ViewState {
+  const today = todayParts();
+  const mode = readCalMode();
+  if (mode === "hijri") {
+    const h = getHijriParts(today.year, today.month, today.day);
+    if (h?.month) return { mode, year: h.year, month: h.month };
+  }
+  return { mode: "gregorian", year: today.year, month: today.month };
+}
+
 export function MonthPage() {
-  const [view, setView] = useState(() => todayParts());
+  const [view, setView] = useState<ViewState>(() => initialView());
   const [rows, setRows] = useState<MonthRow[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [hintHidden, setHintHidden] = useState(false);
@@ -40,9 +96,8 @@ export function MonthPage() {
   }, []);
 
   const today = todayParts();
+  const todayHijri = getHijriParts(today.year, today.month, today.day);
 
-  // Paint shell + skeleton first (rAF), then compute; enforce a short minimum
-  // so Month tab / prev-next always shows a visible shimmer.
   useEffect(() => {
     const gen = ++loadGen.current;
     setLoading(true);
@@ -50,16 +105,21 @@ export function MonthPage() {
     const started = performance.now();
     let settleTimer = 0;
     let cancelled = false;
+    const isCancelled = () => cancelled || gen !== loadGen.current;
 
-    // Paint skeleton, then compute in yielded chunks so Today/prev-next stay tappable.
     const raf1 = requestAnimationFrame(() => {
-      void loadMonthTimesAsync(view.year, view.month, () => cancelled || gen !== loadGen.current)
+      const load =
+        view.mode === "hijri"
+          ? loadHijriMonthTimesAsync(view.year, view.month, isCancelled)
+          : loadMonthTimesAsync(view.year, view.month, isCancelled);
+
+      void load
         .then((next) => {
-          if (cancelled || gen !== loadGen.current) return;
+          if (isCancelled()) return;
           const remain = Math.max(0, MIN_SKELETON_MS - (performance.now() - started));
           settleTimer = window.setTimeout(() => {
-            if (cancelled || gen !== loadGen.current) return;
-            setRows(next);
+            if (isCancelled()) return;
+            setRows(next as MonthRow[]);
             setLoading(false);
           }, remain);
         })
@@ -95,6 +155,10 @@ export function MonthPage() {
 
   function shiftMonth(delta: number) {
     setView((prev) => {
+      if (prev.mode === "hijri") {
+        const next = shiftHijriMonth(prev.year, prev.month, delta);
+        return { mode: "hijri", year: next.year, month: next.month };
+      }
       let { year, month } = prev;
       month += delta;
       if (month < 1) {
@@ -105,19 +169,57 @@ export function MonthPage() {
         month = 1;
         year += 1;
       }
-      return { year, month, day: 1 };
+      return { mode: "gregorian", year, month };
     });
     if (gridWrapRef.current) gridWrapRef.current.scrollTop = 0;
   }
 
+  function setMode(mode: CalMode) {
+    if (mode === view.mode) return;
+    writeCalMode(mode);
+    if (mode === "hijri") {
+      // Prefer today's Hijri month when current Gregorian month contains today; else day 1.
+      const inView =
+        today.year === view.year && today.month === view.month ? today : { year: view.year, month: view.month, day: 1 };
+      const h = getHijriParts(inView.year, inView.month, inView.day);
+      if (h?.month) {
+        setView({ mode: "hijri", year: h.year, month: h.month });
+        return;
+      }
+    } else {
+      // Map Hijri month onto the Gregorian month of its first day.
+      const h = todayHijri;
+      const anchor =
+        h && h.year === view.year && h.month === view.month
+          ? today
+          : null;
+      if (anchor) {
+        setView({ mode: "gregorian", year: anchor.year, month: anchor.month });
+        return;
+      }
+      // Fall back: use first loaded row's gregorian if present, else today
+      const first = rows?.[0];
+      if (first?.gYear && first.gMonth) {
+        setView({ mode: "gregorian", year: first.gYear, month: first.gMonth });
+        return;
+      }
+      setView({ mode: "gregorian", year: today.year, month: today.month });
+      return;
+    }
+    setView({ mode: "gregorian", year: today.year, month: today.month });
+  }
+
+  const title =
+    view.mode === "hijri"
+      ? `${HIJRI_MONTHS[view.month - 1] ?? ""} ${view.year}`
+      : `${MONTHS[view.month - 1]} ${view.year}`;
+
   return (
-    <div className="app month-app">
+    <div className={`app month-app${view.mode === "hijri" ? " is-hijri" : ""}`}>
       <header className="month-header">
         <span className="month-header-spacer" aria-hidden="true" />
         <div className="month-title-block">
-          <h1 className="month-title">
-            {MONTHS[view.month - 1]} {view.year}
-          </h1>
+          <h1 className="month-title">{title}</h1>
           <p className="month-sub">Tallinn</p>
         </div>
         <div className="month-nav">
@@ -129,6 +231,25 @@ export function MonthPage() {
           </button>
         </div>
       </header>
+
+      <div className="month-cal-toggle" role="group" aria-label="Calendar">
+        <button
+          type="button"
+          className={view.mode === "gregorian" ? "is-active" : undefined}
+          aria-pressed={view.mode === "gregorian"}
+          onClick={() => setMode("gregorian")}
+        >
+          Gregorian
+        </button>
+        <button
+          type="button"
+          className={view.mode === "hijri" ? "is-active" : undefined}
+          aria-pressed={view.mode === "hijri"}
+          onClick={() => setMode("hijri")}
+        >
+          Hijri
+        </button>
+      </div>
 
       <p className={`month-scroll-hint${hintHidden || loading ? " is-hidden" : ""}`}>
         Swipe sideways for Maghrib &amp; Isha →
@@ -194,10 +315,22 @@ export function MonthPage() {
                 ))
               : rows.map((row) => {
                   const isToday =
-                    today.year === view.year && today.month === view.month && today.day === row.day;
+                    view.mode === "hijri"
+                      ? Boolean(
+                          todayHijri &&
+                            todayHijri.year === view.year &&
+                            todayHijri.month === view.month &&
+                            todayHijri.day === row.day
+                        )
+                      : today.year === view.year && today.month === view.month && today.day === row.day;
                   return (
-                    <tr key={row.day} className={isToday ? "today-row" : undefined}>
-                      <td className="col-day">{String(row.day).padStart(2, "0")}</td>
+                    <tr key={`${view.mode}-${row.day}-${row.gDay ?? ""}`} className={isToday ? "today-row" : undefined}>
+                      <td className="col-day">
+                        <span className="day-primary">{String(row.day).padStart(2, "0")}</span>
+                        {view.mode === "hijri" && row.gregorianLabel ? (
+                          <span className="day-secondary">{row.gregorianLabel}</span>
+                        ) : null}
+                      </td>
                       <td className="col-wd">{row.weekday}</td>
                       <td>{row.fajr}</td>
                       <td>{row.dhuhr}</td>
