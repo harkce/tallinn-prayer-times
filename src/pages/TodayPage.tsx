@@ -352,8 +352,8 @@ export function TodayPage() {
         </section>
 
         <section className="today" aria-label="Today's prayer times">
-          <ul className={`prayer-list${booting ? " is-loading" : ""}`}>
-            {booting || !bundle
+          <ul className={`prayer-list${!bundle ? " is-loading" : ""}`}>
+            {!bundle
               ? [0, 1, 2, 3, 4].map((i) => (
                   <li key={i} className="prayer-row skeleton-row">
                     <span className="sk sk-row-name" />
