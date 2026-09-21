@@ -14,13 +14,18 @@
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
-  /* JS may raise --sab-floor on Android standalone (env often reports 0) */
+  /* JS may raise --sab-floor when visualViewport measures real bottom chrome */
   --sab-floor: 0px;
   --app-bottom-inset: max(var(--safe-bottom), var(--sab-floor));
-  --app-vh: 100dvh;
+  /* svh = smallest viewport; safer pre-JS fallback than dvh (avoids tall shell) */
+  --app-vh: 100svh;
   --tabbar-tabs: 48px;
   --tabbar-height: calc(6px + var(--tabbar-tabs) + 6px + var(--app-bottom-inset)); /* in-flow; kept for any legacy refs */
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+@supports not (height: 100svh) {
+  :root { --app-vh: 100vh; }
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -39,34 +44,50 @@ html, body, #root {
 #root {
   display: flex;
   flex-direction: column;
+  min-height: 0;
+  /* Single source of shell height; pages fill 100% so they cannot outgrow the visible viewport */
+  height: var(--app-vh);
+  max-height: var(--app-vh);
 }
 
 .app {
   max-width: 480px;
   margin: 0 auto;
-  min-height: var(--app-vh);
+  width: 100%;
+  min-height: 0;
+  height: 100%;
+  max-height: 100%;
   display: flex;
   flex-direction: column;
   padding: 16px 18px 24px;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .app.app-today {
-  /* side padding + landscape notch insets; tabbar is in-flow at the bottom */
-  padding-left: max(18px, var(--safe-left));
-  padding-right: max(18px, var(--safe-right));
-  padding-bottom: 0;
+  /* Shell is full-bleed; content column is capped so tabs span the viewport */
+  max-width: none;
+  padding: 0;
 }
 
-/* Today shell: height tracks visualViewport --app-vh; tab bar stays in-flow */
+/* Today shell: fills #root (--app-vh); tab bar stays in-flow at the bottom */
 .app-today {
-  height: var(--app-vh);
-  max-height: var(--app-vh);
+  height: 100%;
+  max-height: 100%;
   overflow: hidden;
+  box-sizing: border-box;
+}
+
+.app-today .topbar {
+  flex-shrink: 0;
+  width: 100%;
+  max-width: 480px;
+  margin-left: auto;
+  margin-right: auto;
   padding-top: max(12px, var(--safe-top));
   padding-left: max(18px, var(--safe-left));
   padding-right: max(18px, var(--safe-right));
-  padding-bottom: 0;
+  margin-bottom: 12px;
   box-sizing: border-box;
 }
 
@@ -74,11 +95,18 @@ html, body, #root {
 .app-today .today-body {
   flex: 1 1 auto;
   min-height: 0;
+  width: 100%;
+  max-width: 480px;
+  margin-left: auto;
+  margin-right: auto;
   display: flex;
   flex-direction: column;
   overflow: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
+  padding-left: max(18px, var(--safe-left));
+  padding-right: max(18px, var(--safe-right));
+  box-sizing: border-box;
 }
 
 .app-today .today {
@@ -101,6 +129,7 @@ html, body, #root {
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 20px;
+  flex-shrink: 0;
 }
 
 .topbar-left {
@@ -319,21 +348,20 @@ html, body, #root {
 
 
 /* Bottom tabs — in-flow at end of the app shell (same idea as a sticky top nav).
-   Shell height is --app-vh (visible viewport), so the bar sits flush to the
-   visible bottom with no invented Android floor gap. */
+   Shell is exactly --app-vh tall; bar cannot be pushed below the fold.
+   No 100vw full-bleed hack (that overflowed and got clipped under overflow:hidden). */
 #tabbar-root {
   flex-shrink: 0;
+  flex-grow: 0;
   margin-top: auto;
-  /* Full-bleed escape from .app horizontal padding / max-width */
-  width: 100vw;
-  max-width: 100vw;
-  margin-left: calc(50% - 50vw);
-  margin-right: calc(50% - 50vw);
+  width: 100%;
+  max-width: none;
+  align-self: stretch;
 }
 
 .tabbar {
-  position: sticky;
-  bottom: 0;
+  position: relative;
+  bottom: auto;
   left: 0;
   right: 0;
   width: 100%;
@@ -404,14 +432,24 @@ body.month-page {
 .month-app {
   display: flex;
   flex-direction: column;
-  max-width: 720px;
+  max-width: none; /* full-bleed shell; header/grid cap width so tabs span viewport */
   width: 100%;
   margin: 0 auto;
   padding: 0;
   padding-bottom: 0;
-  height: var(--app-vh);
-  max-height: var(--app-vh);
+  height: 100%;
+  max-height: 100%;
   overflow: hidden;
+  box-sizing: border-box;
+}
+
+.month-app .month-header,
+.month-app .month-scroll-hint,
+.month-app .month-grid-wrap {
+  width: 100%;
+  max-width: 720px;
+  margin-left: auto;
+  margin-right: auto;
   box-sizing: border-box;
 }
 
@@ -622,10 +660,6 @@ body.month-page {
     font-size: clamp(26px, 6vw, 36px);
   }
 
-  .month-app {
-    max-width: none;
-  }
-
   .month-grid-wrap {
     padding-left: max(0px, var(--safe-left));
     padding-right: max(0px, var(--safe-right));
@@ -639,10 +673,15 @@ body.month-page {
   }
 
   .app-today .today-body {
+    max-width: none; /* side-by-side uses the full width above the tabs */
     flex-direction: row;
     align-items: stretch;
     gap: 24px;
     overflow: hidden;
+  }
+
+  .app-today .topbar {
+    max-width: none;
   }
 
   .app-today .hero {

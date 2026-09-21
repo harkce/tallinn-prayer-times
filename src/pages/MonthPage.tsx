@@ -4,6 +4,8 @@ import { CITY, getMonthTimes, MONTHS } from "../lib/prayer-calc";
 
 const TZ = CITY.timeZone;
 const SKELETON_ROWS = 10;
+/** Keep shimmer on screen long enough to be perceptible even when calc is instant. */
+const MIN_SKELETON_MS = 320;
 
 type MonthRow = ReturnType<typeof getMonthTimes>[number];
 
@@ -39,18 +41,34 @@ export function MonthPage() {
 
   const today = todayParts();
 
-  // Defer heavy month calc so shell + skeleton paint on the same tap as tab switch.
+  // Paint shell + skeleton first (rAF), then compute; enforce a short minimum
+  // so Month tab / prev-next always shows a visible shimmer.
   useEffect(() => {
     const gen = ++loadGen.current;
     setLoading(true);
     setRows(null);
-    const timer = window.setTimeout(() => {
-      const next = getMonthTimes(view.year, view.month);
-      if (gen !== loadGen.current) return;
-      setRows(next);
-      setLoading(false);
-    }, 0);
+    const started = performance.now();
+    let timer = 0;
+    let raf2 = 0;
+
+    const raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => {
+        timer = window.setTimeout(() => {
+          if (gen !== loadGen.current) return;
+          const next = getMonthTimes(view.year, view.month);
+          const remain = Math.max(0, MIN_SKELETON_MS - (performance.now() - started));
+          timer = window.setTimeout(() => {
+            if (gen !== loadGen.current) return;
+            setRows(next);
+            setLoading(false);
+          }, remain);
+        }, 0);
+      });
+    });
+
     return () => {
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
       clearTimeout(timer);
     };
   }, [view]);

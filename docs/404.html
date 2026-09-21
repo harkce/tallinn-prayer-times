@@ -17,13 +17,18 @@
       (function () {
         var root = document.documentElement;
         var vv = window.visualViewport;
-        var h = vv && vv.height > 0 ? vv.height : window.innerHeight;
-        root.style.setProperty("--app-vh", Math.round(h) + "px");
+        var candidates = [];
+        if (vv && vv.height > 0) candidates.push(vv.height);
+        if (window.innerHeight > 0) candidates.push(window.innerHeight);
+        var client = root.clientHeight;
+        if (client > 0) candidates.push(client);
+        var h = candidates.length ? Math.floor(Math.min.apply(null, candidates)) : 0;
+        if (h > 0) root.style.setProperty("--app-vh", h + "px");
         root.style.setProperty("--sab-floor", "0px");
       })();
     </script>
-    <script type="module" crossorigin src="/tallinn-prayer-times/assets/index-BlhVMcrS.js"></script>
-    <link rel="stylesheet" crossorigin href="/tallinn-prayer-times/assets/index-D2ddcOvu.css">
+    <script type="module" crossorigin src="/tallinn-prayer-times/assets/index-OBX_qYko.js"></script>
+    <link rel="stylesheet" crossorigin href="/tallinn-prayer-times/assets/index-TibU0Oku.css">
   <link rel="manifest" href="/tallinn-prayer-times/manifest.webmanifest"></head>
   <body>
     <div id="root"></div>

@@ -17,8 +17,13 @@
       (function () {
         var root = document.documentElement;
         var vv = window.visualViewport;
-        var h = vv && vv.height > 0 ? vv.height : window.innerHeight;
-        root.style.setProperty("--app-vh", Math.round(h) + "px");
+        var candidates = [];
+        if (vv && vv.height > 0) candidates.push(vv.height);
+        if (window.innerHeight > 0) candidates.push(window.innerHeight);
+        var client = root.clientHeight;
+        if (client > 0) candidates.push(client);
+        var h = candidates.length ? Math.floor(Math.min.apply(null, candidates)) : 0;
+        if (h > 0) root.style.setProperty("--app-vh", h + "px");
         root.style.setProperty("--sab-floor", "0px");
       })();
     </script>
