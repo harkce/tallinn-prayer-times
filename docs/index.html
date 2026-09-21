@@ -16,19 +16,34 @@
     <script>
       (function () {
         var root = document.documentElement;
-        var vv = window.visualViewport;
-        var candidates = [];
-        if (vv && vv.height > 0) candidates.push(vv.height);
-        if (window.innerHeight > 0) candidates.push(window.innerHeight);
-        var client = root.clientHeight;
-        if (client > 0) candidates.push(client);
-        var h = candidates.length ? Math.floor(Math.min.apply(null, candidates)) : 0;
+        var ios =
+          /iP(hone|ad|od)/i.test(navigator.userAgent) ||
+          (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+        var standalone =
+          (window.matchMedia &&
+            (window.matchMedia("(display-mode: standalone)").matches ||
+              window.matchMedia("(display-mode: fullscreen)").matches ||
+              window.matchMedia("(display-mode: minimal-ui)").matches)) ||
+          navigator.standalone === true;
+        var h;
+        if (ios && standalone) {
+          // Prefer layout viewport — visualViewport can sit above the home indicator.
+          h = Math.floor(window.innerHeight || root.clientHeight || 0);
+        } else {
+          var vv = window.visualViewport;
+          var candidates = [];
+          if (vv && vv.height > 0) candidates.push(vv.height);
+          if (window.innerHeight > 0) candidates.push(window.innerHeight);
+          var client = root.clientHeight;
+          if (client > 0) candidates.push(client);
+          h = candidates.length ? Math.floor(Math.min.apply(null, candidates)) : 0;
+        }
         if (h > 0) root.style.setProperty("--app-vh", h + "px");
         root.style.setProperty("--sab-floor", "0px");
       })();
     </script>
-    <script type="module" crossorigin src="/tallinn-prayer-times/assets/index-DISVxasb.js"></script>
-    <link rel="stylesheet" crossorigin href="/tallinn-prayer-times/assets/index-CiiFOK0Y.css">
+    <script type="module" crossorigin src="/tallinn-prayer-times/assets/index-KT_2xjYK.js"></script>
+    <link rel="stylesheet" crossorigin href="/tallinn-prayer-times/assets/index-BKWyfVTF.css">
   <link rel="manifest" href="/tallinn-prayer-times/manifest.webmanifest"></head>
   <body>
     <div id="root"></div>

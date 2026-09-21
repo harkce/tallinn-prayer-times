@@ -1,6 +1,9 @@
 import { useEffect } from "react";
 
 const ANDROID = /Android/i.test(navigator.userAgent);
+const IOS =
+  /iP(hone|ad|od)/i.test(navigator.userAgent) ||
+  (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 
 function isStandalone(): boolean {
   return (
@@ -12,9 +15,17 @@ function isStandalone(): boolean {
   );
 }
 
-/** Never size the shell taller than what is actually visible. */
+/**
+ * Never size the shell taller than what is actually visible — except on iOS
+ * standalone, where visualViewport often ends above the home indicator. Using
+ * that shorter height parks position:fixed bottom bars above a white gap.
+ */
 function visibleHeight(): number {
   const vv = window.visualViewport;
+  if (IOS && isStandalone()) {
+    const h = window.innerHeight || document.documentElement.clientHeight || 0;
+    return Math.floor(h);
+  }
   const candidates: number[] = [];
   if (vv && vv.height > 0) candidates.push(vv.height);
   if (window.innerHeight > 0) candidates.push(window.innerHeight);
@@ -29,6 +40,7 @@ function visibleHeight(): number {
  * we can measure real bottom chrome overlapping the layout viewport.
  * Do NOT invent a constant Android floor — that creates a gap when the
  * webview already sits above the system nav.
+ * On iOS standalone, never invent a floor either — use env(safe-area-inset-bottom).
  */
 export function syncViewportInsets() {
   const root = document.documentElement;
@@ -39,13 +51,12 @@ export function syncViewportInsets() {
   }
 
   let floor = 0;
-  if (vv) {
-    // Layout viewport below the visual viewport = browser/system chrome.
+  // iOS PWA: env(safe-area-inset-bottom) paints the home indicator; a JS floor
+  // double-counts and lifts the tab bar off the bottom.
+  if (!(IOS && isStandalone()) && vv) {
     const occluded = Math.max(0, window.innerHeight - (vv.offsetTop + vv.height));
     if (occluded >= 8) floor = Math.round(occluded);
   }
-  // Android standalone sometimes reports env(safe-area-inset-bottom)=0 while
-  // still drawing under a gesture/nav bar; prefer measured occlusion only.
   if (ANDROID && isStandalone() && floor === 0 && vv) {
     const gap = Math.max(0, window.innerHeight - (vv.height + vv.offsetTop));
     if (gap >= 20) floor = Math.round(gap);

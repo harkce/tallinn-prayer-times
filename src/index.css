@@ -30,9 +30,22 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 
-html, body, #root {
+html {
   margin: 0;
   padding: 0;
+  background: var(--bg);
+  /* Fill the screen on iOS PWA even when --app-vh is still settling */
+  min-height: 100%;
+  min-height: -webkit-fill-available;
+  height: var(--app-vh);
+  max-height: var(--app-vh);
+}
+
+body, #root {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  min-height: -webkit-fill-available;
   height: var(--app-vh);
   max-height: var(--app-vh);
   background: var(--bg);
@@ -405,7 +418,8 @@ html, body, #root {
   grid-template-columns: 1fr 1fr;
   gap: 0;
   margin: 0;
-  padding: 6px 0 max(6px, var(--app-bottom-inset));
+  /* Padding (not bottom offset) so the bar background covers the home indicator. */
+  padding: 6px 0 max(6px, var(--app-bottom-inset), env(safe-area-inset-bottom, 0px));
   border-top: 1px solid var(--border);
   background: var(--bg);
   box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.16);
