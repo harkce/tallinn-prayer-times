@@ -70,14 +70,15 @@ html, body, #root {
   padding: 0;
 }
 
-/* Today shell: fill #root, pack from top so tabs sit under content;
-   leftover viewport falls below the tab bar (not between list and tabs). */
+/* Today shell: scrollable content above a fixed bottom tab bar.
+   Empty space above the tabs is OK; never leave empty space below them. */
 .app-today {
   height: 100%;
   max-height: 100%;
   overflow: auto;
   -webkit-overflow-scrolling: touch;
   justify-content: flex-start;
+  padding-bottom: var(--tabbar-height);
   box-sizing: border-box;
 }
 
@@ -94,8 +95,8 @@ html, body, #root {
   box-sizing: border-box;
 }
 
-/* Portrait: intrinsic content height — no flex-grow. Tabs follow the list
-   in document flow (~16px pad). Leftover viewport sits below the tab bar. */
+/* Portrait: top-aligned content; shell padding-bottom clears the fixed tab bar.
+   Space between list and tabs (page background) is fine. */
 .app-today .today-body {
   flex: 0 0 auto;
   width: 100%;
@@ -346,12 +347,13 @@ html, body, #root {
   pointer-events: none;
 }
 
-.app-today.is-booting .hero-content {
+/* Only force skeleton when we have no data yet (avoid sticky skeleton on hard-refresh hydrate) */
+.app-today.is-booting:not(.has-data) .hero-content {
   display: none !important;
 }
 
-.app-today.is-booting .hero-skel {
-  display: block;
+.app-today.is-booting:not(.has-data) .hero-skel {
+  display: block !important;
 }
 
 .sk-label { width: 48px; height: 12px; margin-bottom: 10px; }
@@ -362,24 +364,24 @@ html, body, #root {
 .sk-row-time { width: 52px; height: 16px; }
 
 
-/* Bottom tabs — in-flow at end of the app shell (same idea as a sticky top nav).
-   Shell is exactly --app-vh tall; bar cannot be pushed below the fold.
-   No 100vw full-bleed hack (that overflowed and got clipped under overflow:hidden). */
+/* Bottom tabs — fixed to the visible viewport bottom.
+   Empty space may sit ABOVE the bar; never leave empty space BELOW it. */
 #tabbar-root {
-  flex-shrink: 0;
-  flex-grow: 0;
-  /* No margin-top:auto. Today packs from top; bar follows content in-flow. */
-  margin-top: 0;
-  width: 100%;
-  max-width: none;
-  align-self: stretch;
+  /* Mount stays in the tree for a11y; bar itself is fixed. */
+  flex: 0 0 0;
+  width: 0;
+  height: 0;
+  overflow: visible;
+  margin: 0;
+  padding: 0;
+  border: 0;
 }
 
 .tabbar {
-  position: relative;
-  bottom: auto;
+  position: fixed;
   left: 0;
   right: 0;
+  bottom: 0;
   width: 100%;
   max-width: none;
   z-index: 40;
@@ -452,7 +454,7 @@ body.month-page {
   width: 100%;
   margin: 0 auto;
   padding: 0;
-  padding-bottom: 0;
+  padding-bottom: var(--tabbar-height);
   height: 100%;
   max-height: 100%;
   overflow: hidden;

@@ -312,7 +312,7 @@ export function TodayPage() {
   const nowMin = bundle?.today?.minuteOfDay ?? -1;
 
   return (
-    <div className={`app app-today${booting ? " is-booting" : ""}`} id="app">
+    <div className={`app app-today${booting ? " is-booting" : ""}${bundle ? " has-data" : ""}`} id="app">
       <header className="topbar">
         <div className="topbar-left">
           <span className="city">Tallinn</span>
