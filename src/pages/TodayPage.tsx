@@ -185,12 +185,37 @@ function loadCache(): CachePayload | null {
   }
 }
 
+
+function bundleFromCache(): Bundle | null {
+  const cached = loadCache();
+  if (!cached) return null;
+  return {
+    today: {
+      year: 0,
+      month: 0,
+      day: 0,
+      weekday: "",
+      hour: 0,
+      minute: 0,
+      second: 0,
+      minuteOfDay: -1
+    },
+    todayLabel: cached.todayLabel,
+    schedule: cached.schedule,
+    next: cached.next,
+    nextIsTomorrow: cached.nextIsTomorrow,
+    currentIndex: cached.currentIndex,
+    totalSeconds: null,
+    generatedAt: cached.generatedAt
+  };
+}
+
 export function TodayPage() {
   const hadPainted = lastBundle != null;
   const [booting, setBooting] = useState(!hadPainted);
   const [offline, setOffline] = useState(!navigator.onLine);
-  const [bundle, setBundle] = useState<Bundle | null>(lastBundle);
-  const [fromCache, setFromCache] = useState(false);
+  const [bundle, setBundle] = useState<Bundle | null>(() => lastBundle ?? bundleFromCache());
+  const [fromCache, setFromCache] = useState(() => lastBundle == null && loadCache() != null);
 
   const tick = useCallback(() => {
     try {
@@ -243,11 +268,19 @@ export function TodayPage() {
     } else {
       const readyAt = performance.now() + BOOT_MS;
       const boot = () => {
-        tick();
+        try {
+          tick();
+        } catch (err) {
+          console.error(err);
+        }
         const wait = Math.max(0, readyAt - performance.now());
         timeoutId = window.setTimeout(() => {
           setBooting(false);
-          tick();
+          try {
+            tick();
+          } catch (err) {
+            console.error(err);
+          }
           intervalId = window.setInterval(tick, 1000);
         }, wait);
       };
@@ -297,13 +330,13 @@ export function TodayPage() {
 
       <div className="today-body">
         <section className="hero" aria-live="polite">
-          <div className="skeleton hero-skel" hidden={!booting}>
+          <div className="skeleton hero-skel" hidden={!!bundle}>
             <div className="sk sk-label" />
             <div className="sk sk-name" />
             <div className="sk sk-time" />
             <div className="sk sk-countdown" />
           </div>
-          <div className="hero-content" hidden={booting}>
+          <div className="hero-content" hidden={!bundle}>
             <div className="next-label">Next</div>
             <div className="next-name-row">
               <h1 className="next-name">{bundle?.next.name ?? "—"}</h1>
