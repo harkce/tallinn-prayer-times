@@ -11,7 +11,7 @@ const MINUTE_KEYS = [
   "maghribMinutes",
   "ishaMinutes"
 ] as const;
-const CACHE_KEY = "tallinn-prayer-cache-v3";
+const CACHE_KEY = "tallinn-prayer-cache-v4";
 const TZ = CITY.timeZone;
 const BOOT_MS = 320;
 

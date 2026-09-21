@@ -635,9 +635,9 @@ const HIJRI_MONTHS = [
   "Muharram",
   "Safar",
   "Rabi al-Awwal",
-  "Rabi al-Thani",
+  "Rabi al-Akhir",
   "Jumada al-Awwal",
-  "Jumada al-Thani",
+  "Jumada al-Akhir",
   "Rajab",
   "Shaban",
   "Ramadan",
@@ -688,9 +688,9 @@ function normalizeHijriMonthName(value) {
   if (plain.includes("shaban") || plain.includes("sha ban")) return "Shaban";
   if (plain.includes("hijjah")) return "Dhul Hijjah";
   if (plain.includes("qidah") || plain.includes("qadah") || plain.includes("qi dah")) return "Dhul Qadah";
-  if (plain.includes("rabi") && (plain.includes("ii") || plain.includes("second") || plain.includes("thani"))) return "Rabi al-Thani";
+  if (plain.includes("rabi") && (plain.includes("ii") || plain.includes("second") || plain.includes("thani"))) return "Rabi al-Akhir";
   if (plain.includes("rabi")) return "Rabi al-Awwal";
-  if (plain.includes("jumada") && (plain.includes("ii") || plain.includes("second") || plain.includes("thani"))) return "Jumada al-Thani";
+  if (plain.includes("jumada") && (plain.includes("ii") || plain.includes("second") || plain.includes("thani"))) return "Jumada al-Akhir";
   if (plain.includes("jumada")) return "Jumada al-Awwal";
 
   return value;
