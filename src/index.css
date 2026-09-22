@@ -16,7 +16,9 @@
   --safe-right: env(safe-area-inset-right, 0px);
   /* JS may raise --sab-floor when visualViewport measures real bottom chrome */
   --sab-floor: 0px;
-  --app-bottom-inset: max(var(--safe-bottom), var(--sab-floor));
+  --ios-chin: 0px;
+  /* iOS standalone may report env(safe-area)=0; --ios-chin fills the home-indicator strip */
+  --app-bottom-inset: max(var(--safe-bottom), var(--sab-floor), var(--ios-chin));
   /* svh = smallest viewport; safer pre-JS fallback than dvh (avoids tall shell) */
   --app-vh: 100svh;
   --tabbar-tabs: 48px;
@@ -34,9 +36,6 @@ html {
   margin: 0;
   padding: 0;
   background: var(--bg);
-  /* Fill the screen on iOS PWA even when --app-vh is still settling */
-  min-height: 100%;
-  min-height: -webkit-fill-available;
   height: var(--app-vh);
   max-height: var(--app-vh);
 }
@@ -44,14 +43,24 @@ html {
 body, #root {
   margin: 0;
   padding: 0;
-  min-height: 100%;
-  min-height: -webkit-fill-available;
   height: var(--app-vh);
   max-height: var(--app-vh);
   background: var(--bg);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
   overflow: hidden;
+}
+
+/*
+  iOS standalone WebKit bug: svh / -webkit-fill-available / visualViewport are
+  short (lying viewport). 100vh fills the real screen including the chin.
+*/
+@media (display-mode: standalone), (display-mode: fullscreen), (display-mode: minimal-ui) {
+  html, body, #root {
+    height: 100vh;
+    max-height: 100vh;
+    min-height: 100vh;
+  }
 }
 
 #root {
@@ -419,7 +428,7 @@ body, #root {
   gap: 0;
   margin: 0;
   /* Padding (not bottom offset) so the bar background covers the home indicator. */
-  padding: 6px 0 max(6px, var(--app-bottom-inset), env(safe-area-inset-bottom, 0px));
+  padding: 6px 0 max(6px, var(--app-bottom-inset));
   border-top: 1px solid var(--border);
   background: var(--bg);
   box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.16);

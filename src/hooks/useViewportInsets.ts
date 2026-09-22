@@ -10,22 +10,27 @@ function isStandalone(): boolean {
     window.matchMedia("(display-mode: standalone)").matches ||
     window.matchMedia("(display-mode: fullscreen)").matches ||
     window.matchMedia("(display-mode: minimal-ui)").matches ||
-    // iOS Safari legacy
     (window.navigator as Navigator & { standalone?: boolean }).standalone === true
   );
 }
 
 /**
- * Never size the shell taller than what is actually visible — except on iOS
- * standalone, where visualViewport often ends above the home indicator. Using
- * that shorter height parks position:fixed bottom bars above a white gap.
+ * iOS standalone (WebKit #254868): visualViewport / svh / -webkit-fill-available
+ * report the "lying" viewport — short of the real screen by the chin. 100vh fills
+ * the screen; screen.height - innerHeight estimates the dead zone.
  */
+function iosChinPx(): number {
+  const lie = Math.max(0, window.screen.height - window.innerHeight);
+  if (lie <= 0) return 0;
+  // lie includes top status + bottom home indicator. Prefer a bottom-sized slice.
+  // Typical: status ~47–59, home ~20–34. If lie is small, use it as-is.
+  if (lie <= 40) return Math.round(lie);
+  const bottom = Math.min(40, Math.max(20, lie - 47));
+  return Math.round(bottom);
+}
+
 function visibleHeight(): number {
   const vv = window.visualViewport;
-  if (IOS && isStandalone()) {
-    const h = window.innerHeight || document.documentElement.clientHeight || 0;
-    return Math.floor(h);
-  }
   const candidates: number[] = [];
   if (vv && vv.height > 0) candidates.push(vv.height);
   if (window.innerHeight > 0) candidates.push(window.innerHeight);
@@ -36,24 +41,29 @@ function visibleHeight(): number {
 }
 
 /**
- * Size the app shell to the visible viewport and only raise --sab-floor when
- * we can measure real bottom chrome overlapping the layout viewport.
- * Do NOT invent a constant Android floor — that creates a gap when the
- * webview already sits above the system nav.
- * On iOS standalone, never invent a floor either — use env(safe-area-inset-bottom).
+ * Size the app shell to the visible viewport.
+ * iOS standalone: use CSS 100vh (not a short px height) + --ios-chin for tab padding.
  */
 export function syncViewportInsets() {
   const root = document.documentElement;
-  const vv = window.visualViewport;
+
+  if (IOS && isStandalone()) {
+    // Must be the keyword 100vh — pixel innerHeight recreates the white chin gap.
+    root.style.setProperty("--app-vh", "100vh");
+    root.style.setProperty("--ios-chin", `${iosChinPx()}px`);
+    root.style.setProperty("--sab-floor", "0px");
+    return;
+  }
+
+  root.style.setProperty("--ios-chin", "0px");
   const height = visibleHeight();
   if (height > 0) {
     root.style.setProperty("--app-vh", `${height}px`);
   }
 
   let floor = 0;
-  // iOS PWA: env(safe-area-inset-bottom) paints the home indicator; a JS floor
-  // double-counts and lifts the tab bar off the bottom.
-  if (!(IOS && isStandalone()) && vv) {
+  const vv = window.visualViewport;
+  if (vv) {
     const occluded = Math.max(0, window.innerHeight - (vv.offsetTop + vv.height));
     if (occluded >= 8) floor = Math.round(occluded);
   }
@@ -64,7 +74,6 @@ export function syncViewportInsets() {
   root.style.setProperty("--sab-floor", `${floor}px`);
 }
 
-/** Browsers often update visualViewport a frame (or more) after orientationchange. */
 function syncAfterOrientation() {
   syncViewportInsets();
   requestAnimationFrame(() => {

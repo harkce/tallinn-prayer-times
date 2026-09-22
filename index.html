@@ -25,21 +25,25 @@
               window.matchMedia("(display-mode: fullscreen)").matches ||
               window.matchMedia("(display-mode: minimal-ui)").matches)) ||
           navigator.standalone === true;
-        var h;
-        if (ios && standalone) {
-          // Prefer layout viewport — visualViewport can sit above the home indicator.
-          h = Math.floor(window.innerHeight || root.clientHeight || 0);
-        } else {
-          var vv = window.visualViewport;
-          var candidates = [];
-          if (vv && vv.height > 0) candidates.push(vv.height);
-          if (window.innerHeight > 0) candidates.push(window.innerHeight);
-          var client = root.clientHeight;
-          if (client > 0) candidates.push(client);
-          h = candidates.length ? Math.floor(Math.min.apply(null, candidates)) : 0;
-        }
-        if (h > 0) root.style.setProperty("--app-vh", h + "px");
         root.style.setProperty("--sab-floor", "0px");
+        root.style.setProperty("--ios-chin", "0px");
+        if (ios && standalone) {
+          // WebKit #254868: use 100vh (not innerHeight px / svh) so the shell
+          // fills the real screen; measure chin for tab-bar padding.
+          root.style.setProperty("--app-vh", "100vh");
+          var lie = Math.max(0, window.screen.height - window.innerHeight);
+          var chin = lie <= 0 ? 0 : lie <= 40 ? Math.round(lie) : Math.round(Math.min(40, Math.max(20, lie - 47)));
+          root.style.setProperty("--ios-chin", chin + "px");
+          return;
+        }
+        var vv = window.visualViewport;
+        var candidates = [];
+        if (vv && vv.height > 0) candidates.push(vv.height);
+        if (window.innerHeight > 0) candidates.push(window.innerHeight);
+        var client = root.clientHeight;
+        if (client > 0) candidates.push(client);
+        var h = candidates.length ? Math.floor(Math.min.apply(null, candidates)) : 0;
+        if (h > 0) root.style.setProperty("--app-vh", h + "px");
       })();
     </script>
   </head>
