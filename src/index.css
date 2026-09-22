@@ -503,10 +503,18 @@ body.month-page {
 /* Width-cap only — do NOT flex-grow the header/hint (that created the Month gap). */
 .month-app .month-header,
 .month-app .month-scroll-hint,
-.month-app .month-cal-toggle,
 .month-app .month-grid-wrap {
   width: 100%;
   max-width: 720px;
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+}
+
+/* Toggle stays content-sized (pill), only centered — never stretch to stage width */
+.month-app .month-cal-toggle {
+  width: auto;
+  max-width: 100%;
   margin-left: auto;
   margin-right: auto;
   box-sizing: border-box;
@@ -950,7 +958,6 @@ body.month-page {
   /* Month: wider stage so all prayer columns fit without sideways swipe */
   .month-app .month-header,
   .month-app .month-scroll-hint,
-  .month-app .month-cal-toggle,
   .month-app .month-grid-wrap {
     max-width: var(--stage-month);
   }
