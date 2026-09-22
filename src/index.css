@@ -911,14 +911,14 @@ body.month-page {
    Centered stage, not a stretched phone. Tabs match stage width. */
 @media (min-width: 900px) {
   :root {
-    --stage-today: 800px;
-    --stage-month: 960px;
+    /* One stage width for Today, Month, and tabs — no jump when switching views */
+    --stage-max: 920px;
   }
 
   /* Today: wider stage + hero | list side-by-side (portrait desktop too) */
   .app-today .topbar,
   .app-today .today-body {
-    max-width: var(--stage-today);
+    max-width: var(--stage-max);
   }
 
   .app-today .today-body {
@@ -967,7 +967,7 @@ body.month-page {
   .month-app .month-header,
   .month-app .month-scroll-hint,
   .month-app .month-grid-wrap {
-    max-width: var(--stage-month);
+    max-width: var(--stage-max);
   }
 
   .month-scroll-hint {
@@ -998,17 +998,12 @@ body.month-page {
   .tabbar {
     left: 50%;
     right: auto;
-    width: min(100% - 32px, var(--stage-today));
-    max-width: min(100% - 32px, var(--stage-today));
+    width: min(100% - 32px, var(--stage-max));
+    max-width: min(100% - 32px, var(--stage-max));
     transform: translateX(-50%);
     border-radius: 14px 14px 0 0;
     border-left: 1px solid var(--border);
     border-right: 1px solid var(--border);
-  }
-
-  body:has(.month-app) .tabbar {
-    width: min(100% - 32px, var(--stage-month));
-    max-width: min(100% - 32px, var(--stage-month));
   }
 }
 
