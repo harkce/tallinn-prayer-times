@@ -503,6 +503,7 @@ body.month-page {
 /* Width-cap only — do NOT flex-grow the header/hint (that created the Month gap). */
 .month-app .month-header,
 .month-app .month-scroll-hint,
+.month-app .month-cal-toggle,
 .month-app .month-grid-wrap {
   width: 100%;
   max-width: 720px;
@@ -887,6 +888,114 @@ body.month-page {
   }
 }
 
+
+
+
+/* ========== Desktop stage (≥900px) ==========
+   Centered stage, not a stretched phone. Tabs match stage width. */
+@media (min-width: 900px) {
+  :root {
+    --stage-today: 800px;
+    --stage-month: 960px;
+  }
+
+  /* Today: wider stage + hero | list side-by-side (portrait desktop too) */
+  .app-today .topbar,
+  .app-today .today-body {
+    max-width: var(--stage-today);
+  }
+
+  .app-today .today-body {
+    flex: 1 1 auto;
+    flex-direction: row;
+    align-items: stretch;
+    gap: 28px;
+    overflow: hidden;
+    padding-top: 8px;
+    padding-bottom: 20px;
+  }
+
+  .app-today .hero {
+    flex: 0 0 40%;
+    max-width: 40%;
+    margin-bottom: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .app-today .next-name {
+    font-size: clamp(28px, 3.2vw, 40px);
+  }
+
+  .app-today .today {
+    flex: 1 1 60%;
+    min-width: 0;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .app-today .prayer-list {
+    height: 100%;
+    justify-content: stretch;
+  }
+
+  .app-today .prayer-row {
+    flex: 1 1 auto;
+    min-height: 48px;
+    height: auto;
+  }
+
+  /* Month: wider stage so all prayer columns fit without sideways swipe */
+  .month-app .month-header,
+  .month-app .month-scroll-hint,
+  .month-app .month-cal-toggle,
+  .month-app .month-grid-wrap {
+    max-width: var(--stage-month);
+  }
+
+  .month-scroll-hint {
+    /* All columns visible on desktop stage — hint not needed */
+    display: none;
+  }
+
+  .month-grid,
+  .month-labels {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .month-app.has-dual-day .month-grid col.col-day,
+  .month-app.is-hijri .month-grid col.col-day {
+    width: 64px;
+  }
+
+  .month-app.has-dual-day .month-labels,
+  .month-app.is-hijri .month-labels {
+    grid-template-columns: 64px 44px repeat(5, minmax(72px, 1fr));
+  }
+
+  .month-grid col.col-wd { width: 44px; }
+  .month-grid col.col-time { width: auto; }
+
+  /* Tabs: centered, stage-wide — never full-bleed on a wide monitor */
+  .tabbar {
+    left: 50%;
+    right: auto;
+    width: min(100% - 32px, var(--stage-today));
+    max-width: min(100% - 32px, var(--stage-today));
+    transform: translateX(-50%);
+    border-radius: 14px 14px 0 0;
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+  }
+
+  body:has(.month-app) .tabbar {
+    width: min(100% - 32px, var(--stage-month));
+    max-width: min(100% - 32px, var(--stage-month));
+  }
+}
 
 @media (prefers-color-scheme: light) {
   :root {
