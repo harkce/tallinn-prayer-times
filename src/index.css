@@ -6,6 +6,7 @@
   --text-muted: #8b97ad;
   --text-past: #a0adc3;
   --accent: #E8C547;
+  --on-accent: #101826; /* text/icons on accent fill */
   --border: rgba(255, 255, 255, 0.08);
   --pill-bg: rgba(255, 180, 70, 0.18);
   --pill-text: #ffc46b;
@@ -527,7 +528,8 @@ body.month-page {
 }
 
 .month-cal-toggle {
-  display: inline-flex;
+  display: inline-grid;
+  grid-template-columns: 1fr 1fr;
   align-self: center;
   margin: 8px auto 0;
   padding: 3px;
@@ -535,6 +537,8 @@ body.month-page {
   background: var(--chip-bg, rgba(255, 255, 255, 0.06));
   border: 1px solid var(--border);
   gap: 2px;
+  /* ~34px total height with button padding */
+  box-sizing: border-box;
 }
 
 .month-cal-toggle button {
@@ -546,15 +550,19 @@ body.month-page {
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.02em;
-  padding: 6px 14px;
+  min-width: 92px;
+  min-height: 28px;
+  padding: 6px 12px;
   border-radius: 999px;
   cursor: pointer;
+  text-align: center;
   -webkit-tap-highlight-color: transparent;
 }
 
 .month-cal-toggle button.is-active {
-  background: var(--bg-elev, rgba(255, 255, 255, 0.1));
-  color: var(--accent);
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 700;
 }
 
 .day-primary {
@@ -1013,6 +1021,7 @@ body.month-page {
     --text-muted: #5c6b82;
     --text-past: #6b7c94;
     --accent: #C9A63A;
+    --on-accent: #101826;
     --border: rgba(16, 24, 38, 0.1);
     --pill-bg: rgba(180, 100, 0, 0.14);
     --pill-text: #9a5a00;
