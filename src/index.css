@@ -1039,6 +1039,13 @@ body.month-page {
     background: rgba(244, 246, 250, 0.96);
   }
 
+  /* Light switcher: white chip + dark gold text (avoids solid gold fill clash) */
+  .month-cal-toggle button.is-active {
+    background: var(--bg-elev);
+    color: #7a5200; /* ~7:1 on white */
+    box-shadow: 0 0 0 1px rgba(201, 166, 58, 0.45);
+  }
+
   .month-labels,
   .month-labels .col-day,
   .month-grid td.col-day {
