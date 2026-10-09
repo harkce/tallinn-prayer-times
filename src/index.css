@@ -88,9 +88,10 @@ body, #root {
 }
 
 .app.app-today {
-  /* Shell is full-bleed; content column is capped so tabs span the viewport */
+  /* Shell is full-bleed; content column is capped so tabs span the viewport.
+     Keep bottom clearance for the fixed tab bar (this selector out-ranks .app-today). */
   max-width: none;
-  padding: 0;
+  padding: 0 0 calc(var(--tabbar-height) + 1px);
 }
 
 /* Today shell: scrollable content above a fixed bottom tab bar.
@@ -1007,6 +1008,7 @@ body.month-page {
   }
 }
 
+
 @media (prefers-color-scheme: light) {
   :root {
     --bg: #f4f6fa;
@@ -1052,4 +1054,29 @@ body.month-page {
   .month-grid tr.today-row td.col-day {
     background: #e8f0fc;
   }
+}
+
+/* Side-by-side Today: rows keep natural height; list scrolls rather than cropping under tabs */
+@media (orientation: landscape) and (min-width: 640px), (min-width: 900px) {
+  .app-today .today-body {
+    min-height: 0;
+  }
+  .app-today .today {
+    align-self: center;
+    max-height: 100%;
+    overflow: auto;
+  }
+  .app-today .prayer-list {
+    height: auto;
+    justify-content: flex-start;
+  }
+  .app-today .prayer-row {
+    flex: 0 0 auto;
+    min-height: 52px;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+  .app-today .topbar { margin-bottom: 6px; }
+  .app-today .prayer-row { min-height: 44px; }
 }
